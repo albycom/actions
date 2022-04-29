@@ -92,6 +92,7 @@ runs:
         if [ "${{ inputs.labels }}" != "" ]; then
           echo "::set-output name=env_vars::--update-labels=${{ inputs.labels }}"
         fi
+      shell: bash
 
 
     - name: Deploy Ingesting Cloud Function
