@@ -103,11 +103,11 @@ runs:
           --region=${{ inputs.gcp_region }} \
           --runtime=${{ inputs.runtime }} \
           --vpc-connector=kepler-vpc-connector \
-          ${{ steps.translate_inputs.outputs.retry }}
-          ${{ steps.translate_inputs.outputs.trigger_http }}
-          ${{ steps.translate_inputs.outputs.trigger_event }}
-          ${{ steps.translate_inputs.outputs.trigger_resource }}
-          ${{ steps.translate_inputs.outputs.env_vars }}
+          ${{ steps.translate_inputs.outputs.retry }} \
+          ${{ steps.translate_inputs.outputs.trigger_http }} \
+          ${{ steps.translate_inputs.outputs.trigger_event }} \
+          ${{ steps.translate_inputs.outputs.trigger_resource }} \
+          ${{ steps.translate_inputs.outputs.env_vars }} \
           ${{ steps.translate_inputs.outputs.labels }}
       shell: bash
 
