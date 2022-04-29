@@ -1,0 +1,123 @@
+name: "Deploy Cloud Function"
+description: "Deploys Cloud Function"
+inputs:
+  gcp_admin_sa:
+    description: "GCP admin service account"
+    required: true
+  working_directory:
+    description: "Working directory for the Cloud Function"
+    required: true
+  function_name:
+    description: "Cloud Function name"
+    required: true
+  entry_point:
+    description: "Name of the function within main.py"
+    required: true
+  gcp_region:
+    description: "GCP region"
+    required: false
+    default: "us-central1"
+  runtime:
+    # Have only tested this action with python...
+    description: 'Cloud Function Runtime'
+    required: false
+    default: "python39"
+  env_vars:
+    description: 'env vars passed to --set-env-vars. Formatted like:  SERVICE_STAGE=staging,GCP_REGION=us-central1,etc..'
+    required: false
+    default: ""
+  labels:
+    description: 'Cloud Function Labels, Formatted like: environment=staging,service=my_service,etc..'
+    required: false
+    default: ""
+  trigger_type:
+    description: "trigger for cloud function (pubsub | http)"
+    required: true
+  pubsub_topic:
+    description: "Pubsub topic for Cloud Function to subscribe to (only used if trigger_type == 'pubsub'"
+    required: false
+    default: ""
+  vpc_connector:
+    description: "kepler vpc connector"
+    default: "kepler-vpc-connector"
+    required: false
+  retry:
+    description: 'Whether to have the Cloud Function retry requests. Default False'
+    required: false
+    default: false
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: actions/setup-node@v2
+      with:
+        node-version: '16'
+
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v0'
+      with:
+        credentials_json: '${{ inputs.gcp_admin_sa }}'
+
+    - name: Set up Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@v0
+
+    - name: Translate some action inputs into CLI flags
+      id: translate_inputs
+      run: |-
+        echo "::set-output name=retry::"
+        echo "::set-output name=trigger_http::"
+        echo "::set-output name=trigger_event::"
+        echo "::set-output name=trigger_resource::"
+        echo "::set-output name=env_vars::"
+        echo "::set-output name=labels::"
+        
+        if [ "${{ inputs.retry }}" = "true" ]; then
+          echo "::set-output name=retry::--retry"
+        fi
+        if [ "${{ inputs.trigger_type }}" = "http" ]; then
+          echo "::set-output name=trigger_http::--trigger_http"
+        elif [ "${{ inputs.trigger_type }}" = "pubsub" ]; then
+          echo "::set-output name=trigger_event::--trigger-event=providers/cloud.pubsub/eventTypes/topic.publish"
+          echo "::set-output name=trigger_resource::--trigger-resource=${{ inputs.pubsub_topic }}"
+        else
+          echo "trigger_type needs to be either 'http' or 'pubsub'"
+          exit 1
+        fi
+        
+        
+        if [ "${{ inputs.env_vars }}" != "" ]; then
+          echo "::set-output name=env_vars::--set-env-vars=${{ inputs.env_vars }}"
+        fi
+
+        if [ "${{ inputs.labels }}" != "" ]; then
+          echo "::set-output name=labels::--update-labels=${{ inputs.labels }}"
+        fi
+      shell: bash
+
+
+    - name: Deploy Ingesting Cloud Function
+      working-directory: ${{ inputs.working_directory }}
+      run: |-
+        gcloud functions deploy ${{ inputs.function_name }} \
+          --entry-point=${{ inputs.entry_point }} \
+          --region=${{ inputs.gcp_region }} \
+          --runtime=${{ inputs.runtime }} \
+          --vpc-connector=kepler-vpc-connector \
+          ${{ steps.translate_inputs.outputs.retry }} \
+          ${{ steps.translate_inputs.outputs.trigger_http }} \
+          ${{ steps.translate_inputs.outputs.trigger_event }} \
+          ${{ steps.translate_inputs.outputs.trigger_resource }} \
+          ${{ steps.translate_inputs.outputs.env_vars }} \
+          ${{ steps.translate_inputs.outputs.labels }}
+      shell: bash
+
+
+
+
+
+
+
+
+
+
+

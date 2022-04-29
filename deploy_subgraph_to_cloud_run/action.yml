@@ -1,0 +1,145 @@
+name: "Deploy Cloud Function"
+description: "Deploys Cloud Function"
+inputs:
+  gcp_admin_sa:
+    description: "GCP admin service account"
+    required: true
+  working_directory:
+    description: "Working directory for the Cloud Function"
+    required: true
+  service_name:
+    description: "service name name"
+    required: true
+  gcp_project:
+    description: "gcp project"
+    required: true
+  cloud_build_yaml_path:
+    description: "path to cloudbuild.yaml (usually just 'cloudbuild.yaml' sitting in root of working directory)"
+    required: true
+  cloud_build_substitutions:
+    description: "cloudbuild.yaml substitutions (e.g. _SERVICE_NAME=my_service,_SERVICE_PORT=4006)"
+    required: true
+  gcp_region:
+    description: "GCP region"
+    required: false
+    default: "us-central1"
+  service_port:
+    description: "service port"
+    required: true
+  env_vars:
+    description: 'env vars passed to --set-env-vars. Formatted like:  SERVICE_STAGE=staging,GCP_REGION=us-central1,etc..'
+    required: false
+    default: ""
+  labels:
+    description: 'Cloud Run Labels, Formatted like: environment=staging,service=my_service,etc..'
+    required: false
+    default: ""
+  secrets:
+    description: 'Cloud Run secrets to be passed, Formatted like: DB_USER=keplerapp-db-user:latest,DB_PASS=keplerapp-db-password:latest,etc..'
+    required: false
+    default: ""
+  apollo_graph_ref:
+    description: 'apollo graph ref'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: actions/setup-node@v2
+      with:
+        node-version: '16'
+
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v0'
+      with:
+        credentials_json: '${{ inputs.gcp_admin_sa }}'
+
+    - name: Set up Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@v0
+
+    - name: Translate some action inputs into CLI flags
+      id: translate_inputs
+      run: |-
+        echo "::set-output name=service_account::"
+        echo "::set-output name=env_vars::"
+        echo "::set-output name=labels::"
+        echo "::set-output name=secrets::"
+        
+        if [ "${{ inputs.service_account }}" != "" ]; then
+          echo "::set-output name=service_account::--service-account=${{ inputs.service_account }}"
+        fi
+        
+        if [ "${{ inputs.env_vars }}" != "" ]; then
+          echo "::set-output name=env_vars::--set-env-vars=${{ inputs.env_vars }}"
+        fi
+
+        if [ "${{ inputs.labels }}" != "" ]; then
+          echo "::set-output name=labels::--labels=${{ inputs.labels }}"
+        fi
+        
+        if [ "${{ inputs.secrets }}" != "" ]; then
+          echo "::set-output name=secrets::--update-secrets=${{ inputs.secrets }}"
+        fi
+      shell: bash
+
+
+    - name: Build
+      working-directory: ${{ inputs.working_directory }}
+      run: |-
+        gcloud builds submit \
+          --quiet \
+          --substitutions=${{ inputs.cloud_build_substitutions }} \
+          --config=${{ inputs.cloud_build_yaml_path }}
+      shell: bash
+
+
+    # TODO: Set --ingress back to "internal" after setting up proper firewall access for Gateway
+    - name: Run
+      working-directory: ${{ inputs.working_directory }}
+      run: |-
+        gcloud run deploy ${{ inputs.service_name }} \
+          --allow-unauthenticated \
+          --min-instances=1 \
+          --platform=managed \
+          --image=gcr.io/${{ inputs.gcp_project }}/${{ inputs.service_name }} \
+          --region=${{ inputs.gcp_region }} \
+          --port ${{ inputs.service_port}} \
+          --vpc-connector=kepler-vpc-connector \
+          --vpc-egress=private-ranges-only \
+          --ingress="all" \
+          ${{ steps.translate_inputs.outputs.service_account }} \
+          ${{ steps.translate_inputs.outputs.env_vars }} \
+          ${{ steps.translate_inputs.outputs.labels }} \
+          ${{ steps.translate_inputs.outputs.secrets }} \
+      shell: bash
+
+    - name: Get apollo args
+      id: apollo_args
+      run: |-
+        echo "::set-output name=url::$(gcloud run services describe ${{ inputs.service_name }} --format='value(status.url)' --platform managed --region ${{ inputs.gcp_region }})"
+      shell: bash
+
+    - name: Install Rover
+      run: |-
+        curl -sSL https://rover.apollo.dev/nix/v0.1.0 | sh
+        # Add Rover to the $GITHUB_PATH so it can be used in another step
+        # https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#adding-a-system-path
+        echo "$HOME/.rover/bin" >> $GITHUB_PATH
+      shell: bash
+
+    - name: Publish Schema to Studio using rover
+      run: |-
+        rover subgraph introspect ${{ steps.apollo_args.outputs.url }} | rover subgraph publish ${{ inputs.apollo_graph_ref }} --name ${{ inputs.service_name }} --schema - --routing-url ${{ steps.apollo_args.outputs.url }}
+      shell: bash
+
+
+
+
+
+
+
+
+
+
+
+
