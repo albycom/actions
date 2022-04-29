@@ -41,6 +41,12 @@ inputs:
   apollo_graph_ref:
     description: 'apollo graph ref'
     required: true
+  apollo_key:
+    description: 'apollo API key'
+    required: true
+  gql_routing_url:
+    description: 'routing URL for apollo'
+    required: true
 
 runs:
   using: 'composite'
@@ -116,6 +122,8 @@ runs:
     - name: Get apollo args
       id: apollo_args
       run: |-
+        echo "GQL_ROUTING_URL=${{ inputs.gql_routing_url }}" >> ${GITHUB_ENV}
+        echo "APOLLO_KEY=${{ inputs.apollo_key }}" >> ${GITHUB_ENV}
         echo "::set-output name=url::$(gcloud run services describe ${{ inputs.service_name }} --format='value(status.url)' --platform managed --region ${{ inputs.gcp_region }})"
       shell: bash
 
