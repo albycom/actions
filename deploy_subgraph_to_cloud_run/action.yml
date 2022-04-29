@@ -109,7 +109,7 @@ runs:
           --ingress="all" \
           ${{ steps.translate_inputs.outputs.service_account }} \
           ${{ steps.translate_inputs.outputs.env_vars }} \
-          ${{ steps.translate_inputs.outputs.labels }}
+          ${{ steps.translate_inputs.outputs.labels }} \
           ${{ steps.translate_inputs.outputs.secrets }} \
       shell: bash
 
