@@ -26,11 +26,6 @@ inputs:
   service_port:
     description: "service port"
     required: true
-  runtime:
-    # Have only tested this action with python...
-    description: 'Cloud Function Runtime'
-    required: false
-    default: "python39"
   env_vars:
     description: 'env vars passed to --set-env-vars. Formatted like:  SERVICE_STAGE=staging,GCP_REGION=us-central1,etc..'
     required: false
