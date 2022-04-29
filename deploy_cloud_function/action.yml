@@ -90,7 +90,7 @@ runs:
         fi
 
         if [ "${{ inputs.labels }}" != "" ]; then
-          echo "::set-output name=env_vars::--update-labels=${{ inputs.labels }}"
+          echo "::set-output name=labels::--update-labels=${{ inputs.labels }}"
         fi
       shell: bash
 
