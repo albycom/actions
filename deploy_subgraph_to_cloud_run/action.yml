@@ -13,6 +13,10 @@ inputs:
   gcp_project:
     description: "gcp project"
     required: true
+  gcp_region:
+    description: "GCP region"
+    required: false
+    default: "us-central1"
   service_account:
     description: "SA for Cloud Run service"
     required: false
@@ -23,10 +27,6 @@ inputs:
   cloud_build_substitutions:
     description: "cloudbuild.yaml substitutions (e.g. _SERVICE_NAME=my_service,_SERVICE_PORT=4006)"
     required: true
-  gcp_region:
-    description: "GCP region"
-    required: false
-    default: "us-central1"
   service_port:
     description: "service port"
     required: true
@@ -40,6 +40,10 @@ inputs:
     default: ""
   secrets:
     description: 'Cloud Run secrets to be passed, Formatted like: DB_USER=keplerapp-db-user:latest,DB_PASS=keplerapp-db-password:latest,etc..'
+    required: false
+    default: ""
+  add_cloudsql_instances:
+    description: 'cloudsql instances to add (i.e. keplerscience-staging:us-central1:kepler)'
     required: false
     default: ""
   apollo_graph_ref:
@@ -71,12 +75,17 @@ runs:
       id: translate_inputs
       run: |-
         echo "::set-output name=service_account::"
+        echo "::set-output name=add_cloudsql_instances::"
         echo "::set-output name=env_vars::"
         echo "::set-output name=labels::"
         echo "::set-output name=secrets::"
         
         if [ "${{ inputs.service_account }}" != "" ]; then
           echo "::set-output name=service_account::--service-account=${{ inputs.service_account }}"
+        fi
+
+        if [ "${{ inputs.add_cloudsql_instances }}" != "" ]; then
+          echo "::set-output name=add_cloudsql_instances::--add-cloudsql-instances=${{ inputs.add_cloudsql_instances }}"
         fi
         
         if [ "${{ inputs.env_vars }}" != "" ]; then
@@ -118,6 +127,7 @@ runs:
           --vpc-egress=private-ranges-only \
           --ingress="all" \
           ${{ steps.translate_inputs.outputs.service_account }} \
+          ${{ steps.translate_inputs.outputs.add_cloudsql_instances }} \
           ${{ steps.translate_inputs.outputs.env_vars }} \
           ${{ steps.translate_inputs.outputs.labels }} \
           ${{ steps.translate_inputs.outputs.secrets }} \
