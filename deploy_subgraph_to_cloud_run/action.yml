@@ -13,6 +13,10 @@ inputs:
   gcp_project:
     description: "gcp project"
     required: true
+  service_account:
+    description: "SA for Cloud Run service"
+    required: false
+    default: ""
   cloud_build_yaml_path:
     description: "path to cloudbuild.yaml (usually just 'cloudbuild.yaml' sitting in root of working directory)"
     required: true
