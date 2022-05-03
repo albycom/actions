@@ -31,10 +31,14 @@ inputs:
     required: false
     default: ""
   trigger_type:
-    description: "trigger for cloud function (pubsub | http)"
+    description: "trigger for cloud function (pubsub | http | gcs)"
     required: true
   pubsub_topic:
-    description: "Pubsub topic for Cloud Function to subscribe to (only used if trigger_type == 'pubsub'"
+    description: "Pubsub topic for Cloud Function to subscribe to (only used if trigger_type == 'pubsub')"
+    required: false
+    default: ""
+  gcs_bucket:
+    description: "GCS bucket to watch (only used if trigger_type == 'gcs')"
     required: false
     default: ""
   vpc_connector:
@@ -79,8 +83,11 @@ runs:
         elif [ "${{ inputs.trigger_type }}" = "pubsub" ]; then
           echo "::set-output name=trigger_event::--trigger-event=providers/cloud.pubsub/eventTypes/topic.publish"
           echo "::set-output name=trigger_resource::--trigger-resource=${{ inputs.pubsub_topic }}"
+        elif [ "${{ inputs.trigger_type }}" = "gcs" ]; then
+          echo "::set-output name=trigger_event::--trigger-event=google.storage.object.finalize"
+          echo "::set-output name=trigger_resource::--trigger-resource=${{ inputs.gcs_bucket }}"
         else
-          echo "trigger_type needs to be either 'http' or 'pubsub'"
+          echo "trigger_type needs to be either 'http', 'pubsub' or 'gcs'"
           exit 1
         fi
         
