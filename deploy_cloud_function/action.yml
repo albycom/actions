@@ -68,12 +68,17 @@ runs:
     - name: Translate some action inputs into CLI flags
       id: translate_inputs
       run: |-
+        echo "::set-output name=service_account::"
         echo "::set-output name=retry::"
         echo "::set-output name=trigger_http::"
         echo "::set-output name=trigger_event::"
         echo "::set-output name=trigger_resource::"
         echo "::set-output name=env_vars::"
         echo "::set-output name=labels::"
+
+        if [ "${{ inputs.service_account }}" != "" ]; then
+          echo "::set-output name=service_account::--service-account=${{ inputs.service_account }}"
+        fi
         
         if [ "${{ inputs.retry }}" = "true" ]; then
           echo "::set-output name=retry::--retry"
@@ -110,6 +115,7 @@ runs:
           --region=${{ inputs.gcp_region }} \
           --runtime=${{ inputs.runtime }} \
           --vpc-connector=kepler-vpc-connector \
+          ${{ steps.translate_inputs.outputs.service_account }} \
           ${{ steps.translate_inputs.outputs.retry }} \
           ${{ steps.translate_inputs.outputs.trigger_http }} \
           ${{ steps.translate_inputs.outputs.trigger_event }} \
