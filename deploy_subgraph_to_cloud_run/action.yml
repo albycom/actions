@@ -108,7 +108,7 @@ runs:
         gcloud builds submit \
           --quiet \
           --substitutions=${{ inputs.cloud_build_substitutions }} \
-          --config=${{ inputs.cloud_build_yaml_path }}
+          --config=${{ inputs.cloud_build_yaml_path }} \
           --gcs-log-dir=gs://kepler-${{ env.SERVICE_STAGE }}-cloudbuild-logs/${{ inputs.service_name }}
       shell: bash
 
