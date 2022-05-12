@@ -22,6 +22,10 @@ inputs:
     description: 'Cloud Function Runtime'
     required: false
     default: "python39"
+  service_account:
+    description: "SA for Cloud Function"
+    required: false
+    default: ""
   env_vars:
     description: 'env vars passed to --set-env-vars. Formatted like:  SERVICE_STAGE=staging,GCP_REGION=us-central1,etc..'
     required: false
