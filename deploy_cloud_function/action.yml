@@ -74,9 +74,7 @@ runs:
       run: |-
         echo "::set-output name=service_account::"
         echo "::set-output name=retry::"
-        echo "::set-output name=trigger_http::"
-        echo "::set-output name=trigger_event::"
-        echo "::set-output name=trigger_resource::"
+        echo "::set-output name=trigger::"
         echo "::set-output name=env_vars::"
         echo "::set-output name=labels::"
 
@@ -88,13 +86,11 @@ runs:
           echo "::set-output name=retry::--retry"
         fi
         if [ "${{ inputs.trigger_type }}" = "http" ]; then
-          echo "::set-output name=trigger_http::--trigger-http"
+          echo "::set-output name=trigger::--trigger-http"
         elif [ "${{ inputs.trigger_type }}" = "pubsub" ]; then
-          echo "::set-output name=trigger_event::--trigger-event=providers/cloud.pubsub/eventTypes/topic.publish"
-          echo "::set-output name=trigger_resource::--trigger-resource=${{ inputs.pubsub_topic }}"
+          echo "::set-output name=trigger::--trigger-topic ${{ inputs.pubsub_topic }}"
         elif [ "${{ inputs.trigger_type }}" = "gcs" ]; then
-          echo "::set-output name=trigger_event::--trigger-event=google.storage.object.finalize"
-          echo "::set-output name=trigger_resource::--trigger-resource=${{ inputs.gcs_bucket }}"
+          echo "::set-output name=trigger::--trigger-bucket ${{ inputs.gcs_bucket }}"
         else
           echo "trigger_type needs to be either 'http', 'pubsub' or 'gcs'"
           exit 1
@@ -116,14 +112,12 @@ runs:
       run: |-
         gcloud functions deploy ${{ inputs.function_name }} \
           --entry-point=${{ inputs.entry_point }} \
+          ${{ steps.translate_inputs.outputs.trigger }} \
           --region=${{ inputs.gcp_region }} \
           --runtime=${{ inputs.runtime }} \
           --vpc-connector=kepler-vpc-connector \
           ${{ steps.translate_inputs.outputs.service_account }} \
           ${{ steps.translate_inputs.outputs.retry }} \
-          ${{ steps.translate_inputs.outputs.trigger_http }} \
-          ${{ steps.translate_inputs.outputs.trigger_event }} \
-          ${{ steps.translate_inputs.outputs.trigger_resource }} \
           ${{ steps.translate_inputs.outputs.env_vars }} \
           ${{ steps.translate_inputs.outputs.labels }}
       shell: bash
