@@ -53,6 +53,14 @@ inputs:
     description: 'Whether to have the Cloud Function retry requests. Default False'
     required: false
     default: false
+  timeout:
+    description: 'timeout in seconds. Cant be more than 540'
+    required: false
+    default: false
+  memory:
+    description: 'memory in MB. Cant be more than 8192'
+    required: false
+    default: false
 
 runs:
   using: 'composite'
@@ -77,6 +85,8 @@ runs:
         echo "::set-output name=trigger::"
         echo "::set-output name=env_vars::"
         echo "::set-output name=labels::"
+        echo "::set-output name=timeout::"
+        echo "::set-output name=memory::"
 
         if [ "${{ inputs.service_account }}" != "" ]; then
           echo "::set-output name=service_account::--service-account=${{ inputs.service_account }}"
@@ -100,6 +110,16 @@ runs:
         if [ "${{ inputs.env_vars }}" != "" ]; then
           echo "::set-output name=env_vars::--set-env-vars=${{ inputs.env_vars }}"
         fi
+        
+        
+        if [ "${{ inputs.timeout }}" != "" ]; then
+          echo "::set-output name=timeout::--timeout=${{ inputs.timeout }}"
+        fi
+        
+        
+        if [ "${{ inputs.memory }}" != "" ]; then
+          echo "::set-output name=memory::--memory=${{ inputs.memory }}"
+        fi
 
         if [ "${{ inputs.labels }}" != "" ]; then
           echo "::set-output name=labels::--update-labels=${{ inputs.labels }}"
@@ -117,6 +137,8 @@ runs:
           --runtime=${{ inputs.runtime }} \
           --vpc-connector=kepler-vpc-connector \
           ${{ steps.translate_inputs.outputs.service_account }} \
+          ${{ steps.translate_inputs.outputs.timeout }} \
+          ${{ steps.translate_inputs.outputs.memory }} \
           ${{ steps.translate_inputs.outputs.retry }} \
           ${{ steps.translate_inputs.outputs.env_vars }} \
           ${{ steps.translate_inputs.outputs.labels }}
