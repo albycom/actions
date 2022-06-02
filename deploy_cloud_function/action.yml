@@ -54,11 +54,11 @@ inputs:
     required: false
     default: false
   timeout:
-    description: 'timeout in seconds. Cant be more than 540'
+    description: 'timeout in seconds. Cant be more than 540s'
     required: false
     default: false
   memory:
-    description: 'memory in MB. Cant be more than 8192'
+    description: 'memory in MB. Cant be more than 8192MB'
     required: false
     default: false
 
