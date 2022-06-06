@@ -56,11 +56,11 @@ inputs:
   timeout:
     description: 'timeout in seconds. Cant be more than 540s'
     required: false
-    default: false
+    default: ""
   memory:
     description: 'memory in MB. Cant be more than 8192MB'
     required: false
-    default: false
+    default: ""
 
 runs:
   using: 'composite'
