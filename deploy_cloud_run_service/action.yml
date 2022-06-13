@@ -32,6 +32,9 @@ inputs:
   ingress:
     description: "Ingress rules for service"
     default: "all"
+  timeout:
+    description: "Timeout rules for service"
+    default: 10000
   service_account:
     description: "SA for Cloud Run service"
     required: false
@@ -129,6 +132,7 @@ runs:
           --max-instances=${{ inputs.max_instances }} \
           --platform=managed \
           --image=gcr.io/${{ inputs.gcp_project }}/${{ inputs.service_name }} \
+          --timeout=${{ inputs.timeout }} \
           --region=${{ inputs.gcp_region }} \
           --port ${{ inputs.service_port}} \
           --vpc-connector=${{ inputs.vpc_connector }} \
