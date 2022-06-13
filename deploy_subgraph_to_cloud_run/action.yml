@@ -125,7 +125,7 @@ runs:
         gcp_admin_sa: ${{ inputs.gcp_admin_sa }}
         working_directory: ${{ inputs.working_directory }}
         service_name: ${{ inputs.service_name }}
-        service_port: ${{ inpts.service_port }}
+        service_port: ${{ inputs.service_port }}
         gcp_project: ${{ inputs.gcp_project }}
         gcp_region: ${{ inputs.gcp_region }}
         min_instances: ${{ inputs.min_instances }}
