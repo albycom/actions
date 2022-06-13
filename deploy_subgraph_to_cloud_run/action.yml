@@ -17,6 +17,24 @@ inputs:
     description: "GCP region"
     required: false
     default: "us-central1"
+  min_instances:
+    description: "Minimum number of instances to launch"
+    default: 0
+  max_instances:
+    description: "Maximum number of instances to launch"
+    default: 100
+  vpc_connector:
+    description: "VPC Connector for private network communitation"
+    required: true
+  vpc_egress:
+    description: "VPC egress rules for service"
+    default: "private-ranges-only"
+  ingress:
+    description: "Ingress rules for service"
+    default: "all"
+  timeout:
+    description: "Timeout rules for service"
+    default: 10000
   service_account:
     description: "SA for Cloud Run service"
     required: false
@@ -79,7 +97,7 @@ runs:
         echo "::set-output name=env_vars::"
         echo "::set-output name=labels::"
         echo "::set-output name=secrets::"
-        
+
         if [ "${{ inputs.service_account }}" != "" ]; then
           echo "::set-output name=service_account::--service-account=${{ inputs.service_account }}"
         fi
@@ -87,7 +105,7 @@ runs:
         if [ "${{ inputs.add_cloudsql_instances }}" != "" ]; then
           echo "::set-output name=add_cloudsql_instances::--add-cloudsql-instances=${{ inputs.add_cloudsql_instances }}"
         fi
-        
+
         if [ "${{ inputs.env_vars }}" != "" ]; then
           echo "::set-output name=env_vars::--set-env-vars=${{ inputs.env_vars }}"
         fi
@@ -95,44 +113,33 @@ runs:
         if [ "${{ inputs.labels }}" != "" ]; then
           echo "::set-output name=labels::--labels=${{ inputs.labels }}"
         fi
-        
+
         if [ "${{ inputs.secrets }}" != "" ]; then
           echo "::set-output name=secrets::--update-secrets=${{ inputs.secrets }}"
         fi
       shell: bash
 
-
-    - name: Build
-      working-directory: ${{ inputs.working_directory }}
-      run: |-
-        gcloud builds submit \
-          --quiet \
-          --substitutions=${{ inputs.cloud_build_substitutions }} \
-          --config=${{ inputs.cloud_build_yaml_path }} \
-          --gcs-log-dir=gs://kepler-${{ env.SERVICE_STAGE }}-cloudbuild-logs/${{ inputs.service_name }}
-      shell: bash
-
-
-    # TODO: Set --ingress back to "internal" after setting up proper firewall access for Gateway
-    - name: Run
-      working-directory: ${{ inputs.working_directory }}
-      run: |-
-        gcloud run deploy ${{ inputs.service_name }} \
-          --allow-unauthenticated \
-          --min-instances=1 \
-          --platform=managed \
-          --image=gcr.io/${{ inputs.gcp_project }}/${{ inputs.service_name }} \
-          --region=${{ inputs.gcp_region }} \
-          --port ${{ inputs.service_port}} \
-          --vpc-connector=kepler-vpc-connector \
-          --vpc-egress=private-ranges-only \
-          --ingress="all" \
-          ${{ steps.translate_inputs.outputs.service_account }} \
-          ${{ steps.translate_inputs.outputs.add_cloudsql_instances }} \
-          ${{ steps.translate_inputs.outputs.env_vars }} \
-          ${{ steps.translate_inputs.outputs.labels }} \
-          ${{ steps.translate_inputs.outputs.secrets }} \
-      shell: bash
+    - name: Build and deploy Cloud Run services
+      uses: keplerscience/actions/deploy_cloud_run_service@main
+      with:
+        gcp_admin_sa: ${{ inputs.gcp_admin_sa }}
+        working_directory: ${{ inputs.working_directory }}
+        service_name: ${{ inputs.service_name }}
+        service_port: ${{ inpts.service_port }}
+        gcp_project: ${{ inputs.gcp_project }}
+        gcp_region: ${{ inputs.gcp_region }}
+        min_instances: ${{ inputs.min_instances }}
+        max_instances: ${{ inputs.max_instances }}
+        vpc_connector: ${{ inputs.vpc_connector }}
+        vpc_egress: ${{ inputs.vpc_egress }}
+        ingress: ${{ inputs.ingress }}
+        service_account: ${{ inputs.service_account }}
+        cloud_build_yaml_path: ${{ inputs.cloud_build_yaml_path }}
+        cloud_build_substitutions: ${{ inputs.cloud_build_substitutions }}
+        env_vars: ${{ inputs.env_vars }}
+        add_cloudsql_instances: ${{ inputs.add_cloudsql_instances }}
+        secrets: ${{ inputs.secrets }}
+        labels: ${{ inputs.labels }}
 
     - name: Get apollo args
       id: apollo_args
@@ -154,15 +161,3 @@ runs:
       run: |-
         rover subgraph introspect ${{ steps.apollo_args.outputs.url }} | rover subgraph publish ${{ inputs.apollo_graph_ref }} --name ${{ inputs.service_name }} --schema - --routing-url ${{ steps.apollo_args.outputs.url }}
       shell: bash
-
-
-
-
-
-
-
-
-
-
-
-
