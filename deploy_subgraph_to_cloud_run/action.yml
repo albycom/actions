@@ -19,7 +19,7 @@ inputs:
     default: "us-central1"
   min_instances:
     description: "Minimum number of instances to launch"
-    default: 0
+    default: 1
   max_instances:
     description: "Maximum number of instances to launch"
     default: 100
@@ -34,7 +34,7 @@ inputs:
     default: "all"
   timeout:
     description: "Timeout rules for service"
-    default: 10
+    default: 300
   service_account:
     description: "SA for Cloud Run service"
     required: false
