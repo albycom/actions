@@ -133,6 +133,7 @@ runs:
         vpc_connector: ${{ inputs.vpc_connector }}
         vpc_egress: ${{ inputs.vpc_egress }}
         ingress: ${{ inputs.ingress }}
+        timeout: ${{ inputs.timeout }}
         service_account: ${{ inputs.service_account }}
         cloud_build_yaml_path: ${{ inputs.cloud_build_yaml_path }}
         cloud_build_substitutions: ${{ inputs.cloud_build_substitutions }}
