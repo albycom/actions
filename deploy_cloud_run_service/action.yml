@@ -34,7 +34,7 @@ inputs:
     default: "all"
   timeout:
     description: "Timeout rules for service"
-    default: 10000
+    default: 10
   service_account:
     description: "SA for Cloud Run service"
     required: false
