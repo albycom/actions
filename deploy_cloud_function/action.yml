@@ -61,6 +61,10 @@ inputs:
     description: 'memory in MB. Cant be more than 8192MB'
     required: false
     default: ""
+  allow_unauthenticated:
+    description: 'allow anyone on the internet to invoke'
+    required: false
+    default: ""
 
 runs:
   using: 'composite'
@@ -87,6 +91,7 @@ runs:
         echo "::set-output name=labels::"
         echo "::set-output name=timeout::"
         echo "::set-output name=memory::"
+        echo "::set-output name=allow_unauthenticated::"
 
         if [ "${{ inputs.service_account }}" != "" ]; then
           echo "::set-output name=service_account::--service-account=${{ inputs.service_account }}"
@@ -124,6 +129,10 @@ runs:
         if [ "${{ inputs.labels }}" != "" ]; then
           echo "::set-output name=labels::--update-labels=${{ inputs.labels }}"
         fi
+
+        if [ "${{ inputs.allow_unauthenticated }}" = "true" ]; then
+          echo "::set-output name=allow_unauthenticated::--allow-unauthenticated"
+        fi
       shell: bash
 
 
@@ -132,6 +141,7 @@ runs:
       run: |-
         gcloud functions deploy ${{ inputs.function_name }} \
           --entry-point=${{ inputs.entry_point }} \
+          ${{ steps.translate_inputs.outputs.allow_unauthenticated }} \
           ${{ steps.translate_inputs.outputs.trigger }} \
           --region=${{ inputs.gcp_region }} \
           --runtime=${{ inputs.runtime }} \
