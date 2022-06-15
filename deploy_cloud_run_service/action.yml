@@ -142,7 +142,7 @@ runs:
           --memory=${{ inputs.memory }} \
           --cpu=${{ inputs.cpu }} \
           --region=${{ inputs.gcp_region }} \
-          --port ${{ inputs.service_port}} \
+          --port=${{ inputs.service_port}} \
           --vpc-connector=${{ inputs.vpc_connector }} \
           --vpc-egress=${{ inputs.vpc_egress }} \
           --ingress=${{ inputs.ingress }} \

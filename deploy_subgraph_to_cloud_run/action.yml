@@ -37,7 +37,7 @@ inputs:
     default: 300
   memory:
     description: "RAM size in Mb (e.g. 512, 1024, 2048)"
-    default: 512
+    default: "512Mi"
   cpu:
     description: "Number of vCPU core"
     default: 1
