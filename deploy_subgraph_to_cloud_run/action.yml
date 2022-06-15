@@ -35,6 +35,12 @@ inputs:
   timeout:
     description: "Timeout rules for service"
     default: 300
+  memory:
+    description: "RAM size in Mb (e.g. 512, 1024, 2048)"
+    default: 512
+  cpu:
+    description: "Number of vCPU core"
+    default: 1
   service_account:
     description: "SA for Cloud Run service"
     required: false
@@ -134,6 +140,8 @@ runs:
         vpc_egress: ${{ inputs.vpc_egress }}
         ingress: ${{ inputs.ingress }}
         timeout: ${{ inputs.timeout }}
+        memory: ${{ inputs.memory }}
+        cpi: ${{ inputs.cpu }}
         service_account: ${{ inputs.service_account }}
         cloud_build_yaml_path: ${{ inputs.cloud_build_yaml_path }}
         cloud_build_substitutions: ${{ inputs.cloud_build_substitutions }}

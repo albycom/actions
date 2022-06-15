@@ -35,6 +35,12 @@ inputs:
   timeout:
     description: "Timeout rules for service"
     default: 300
+  memory:
+    description: "RAM size in Mb (e.g. 512, 1024, 2048)"
+    default: 512
+  cpu:
+    description: "Number of vCPU core"
+    default: 1
   service_account:
     description: "SA for Cloud Run service"
     required: false
@@ -133,6 +139,8 @@ runs:
           --platform=managed \
           --image=gcr.io/${{ inputs.gcp_project }}/${{ inputs.service_name }} \
           --timeout=${{ inputs.timeout }} \
+          --memory=${{ inputs.memory }} \
+          --cpu=${{ inputs.cpu }} \
           --region=${{ inputs.gcp_region }} \
           --port ${{ inputs.service_port}} \
           --vpc-connector=${{ inputs.vpc_connector }} \
