@@ -141,7 +141,7 @@ runs:
         ingress: ${{ inputs.ingress }}
         timeout: ${{ inputs.timeout }}
         memory: ${{ inputs.memory }}
-        cpi: ${{ inputs.cpu }}
+        cpu: ${{ inputs.cpu }}
         service_account: ${{ inputs.service_account }}
         cloud_build_yaml_path: ${{ inputs.cloud_build_yaml_path }}
         cloud_build_substitutions: ${{ inputs.cloud_build_substitutions }}
