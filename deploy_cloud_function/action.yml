@@ -1,7 +1,7 @@
 name: "Deploy Cloud Function"
 description: "Deploys Cloud Function"
 inputs:
-  use_gen2:
+  gen2:
     description: "Flag to enable gen2 function"
     default: false
   gcp_admin_sa:
@@ -100,7 +100,7 @@ runs:
           echo "::set-output name=service_account::--service-account=${{ inputs.service_account }}"
         fi
 
-        if [ "${{ inputs.use_gen2 }}" = "true" ]; then
+        if [ "${{ inputs.gen2 }}" = "true" ]; then
           echo "::set-output name=gen2::--gen2"
         fi
 
