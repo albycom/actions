@@ -1,6 +1,9 @@
 name: "Deploy Cloud Function"
 description: "Deploys Cloud Function"
 inputs:
+  use_gen2:
+    description: "Flag to enable gen2 function"
+    default: false
   gcp_admin_sa:
     description: "GCP admin service account"
     required: true
@@ -21,7 +24,7 @@ inputs:
     # Have only tested this action with python...
     description: 'Cloud Function Runtime'
     required: false
-    default: "python39"
+    default: "python310"
   service_account:
     description: "SA for Cloud Function"
     required: false
@@ -96,7 +99,11 @@ runs:
         if [ "${{ inputs.service_account }}" != "" ]; then
           echo "::set-output name=service_account::--service-account=${{ inputs.service_account }}"
         fi
-        
+
+        if [ "${{ inputs.use_gen2 }}" = "true" ]; then
+          echo "::set-output name=gen2::--gen2"
+        fi
+
         if [ "${{ inputs.retry }}" = "true" ]; then
           echo "::set-output name=retry::--retry"
         fi
@@ -110,18 +117,18 @@ runs:
           echo "trigger_type needs to be either 'http', 'pubsub' or 'gcs'"
           exit 1
         fi
-        
-        
+
+
         if [ "${{ inputs.env_vars }}" != "" ]; then
           echo "::set-output name=env_vars::--set-env-vars=${{ inputs.env_vars }}"
         fi
-        
-        
+
+
         if [ "${{ inputs.timeout }}" != "" ]; then
           echo "::set-output name=timeout::--timeout=${{ inputs.timeout }}"
         fi
-        
-        
+
+
         if [ "${{ inputs.memory }}" != "" ]; then
           echo "::set-output name=memory::--memory=${{ inputs.memory }}"
         fi
@@ -140,6 +147,7 @@ runs:
       working-directory: ${{ inputs.working_directory }}
       run: |-
         gcloud functions deploy ${{ inputs.function_name }} \
+          ${{ steps.translate_inputs.outputs.gen2 }} \
           --entry-point=${{ inputs.entry_point }} \
           ${{ steps.translate_inputs.outputs.allow_unauthenticated }} \
           ${{ steps.translate_inputs.outputs.trigger }} \
@@ -153,14 +161,3 @@ runs:
           ${{ steps.translate_inputs.outputs.env_vars }} \
           ${{ steps.translate_inputs.outputs.labels }}
       shell: bash
-
-
-
-
-
-
-
-
-
-
-
