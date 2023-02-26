@@ -40,7 +40,7 @@ inputs:
   apollo_key:
     description: 'apollo API key'
     required: true
-  gql_routing_url:
+  apollo_routing_url:
     description: 'routing URL for apollo'
     required: true
 
@@ -67,7 +67,7 @@ runs:
     - name: Get apollo args
       id: apollo_args
       run: |-
-        echo "GQL_ROUTING_URL=${{ inputs.gql_routing_url }}" >> ${GITHUB_ENV}
+        echo "GQL_ROUTING_URL=${{ inputs.apollo_routing_url }}" >> ${GITHUB_ENV}
         echo "APOLLO_KEY=${{ inputs.apollo_key }}" >> ${GITHUB_ENV}        
       shell: bash
 
