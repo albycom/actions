@@ -11,9 +11,11 @@ inputs:
     description: "AWS region"
     required: false
     default: "us-west-2"
-  aws_access_key_id: "AWS Access Key ID"
+  aws_access_key_id: 
+    description: "AWS Access Key ID"
     required: true
-  aws_secret_access_key: "AWS Secret Access Key"
+  aws_secret_access_key: 
+    description: "AWS Secret Access Key"
     required: true
   min_instances:
     description: "Minimum number of instances to launch"
