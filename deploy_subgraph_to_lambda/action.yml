@@ -7,16 +7,6 @@ inputs:
   service_stage:
     description: "service stage"
     required: true    
-  aws_region:
-    description: "AWS region"
-    required: false
-    default: "us-west-2"
-  aws_access_key_id: 
-    description: "AWS Access Key ID"
-    required: true
-  aws_secret_access_key: 
-    description: "AWS Secret Access Key"
-    required: true
   min_instances:
     description: "Minimum number of instances to launch"
     default: 1
@@ -56,15 +46,19 @@ runs:
     - run: npm ci
       shell: bash
 
+    - name: Configure AWS credentials for deployment
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        role-to-assume: ${{ secrets.AWS_GITHUB_ACTIONS_ROLE_ARN }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
     - name: serverless deploy
       uses: serverless/github-action@v3.1
       with:
-        args: deploy --stage ${{ inputs.service_stage }} --region ${{ inputs.aws_region }}
+        args: deploy --stage ${{ inputs.service_stage }} --region ${{ secrets.AWS_REGION }}
       env:
         SERVICE_NAME: ${{ inputs.service_name }}        
-        AWS_ACCESS_KEY_ID: ${{ inputs.aws_access_key_id }}
-        AWS_SECRET_ACCESS_KEY: ${{ inputs.aws_secret_access_key }}        
-
+        
     - name: Get apollo args
       id: apollo_args
       run: |-
