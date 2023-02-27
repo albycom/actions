@@ -31,21 +31,21 @@ inputs:
     description: "Number of vCPU core"
     default: 1
   tags:
-    description: 'AWS Labels, Formatted like: environment=staging,service=my_service,etc..'
+    description: "AWS Labels, Formatted like: environment=staging,service=my_service,etc.."
     required: false
     default: ""
   apollo_graph_ref:
-    description: 'apollo graph ref'
+    description: "Apollo graph ref"
     required: true
   apollo_key:
-    description: 'apollo API key'
+    description: "Apollo API key"
     required: true
   apollo_routing_url:
-    description: 'routing URL for apollo'
+    description: "Apollo routing URL"
     required: true
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - uses: actions/checkout@v3
     - name: Use Node.js ${{ matrix.node-version }}
