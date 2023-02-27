@@ -66,6 +66,7 @@ runs:
       run: sls deploy --stage ${{ inputs.service_stage }} --region ${{ inputs.aws_region }} --verbose 
       env:
         SERVICE_NAME: ${{ inputs.service_name }}        
+      shell: bash
         
     - name: Get apollo args
       id: apollo_args
