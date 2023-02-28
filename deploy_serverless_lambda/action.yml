@@ -1,0 +1,44 @@
+name: "Deploy Serverless AWS Lambda"
+description: "Deploys Serverless Lambda"
+inputs:
+  service_name:
+    description: "service name"
+    required: true
+  service_stage:
+    description: "service stage"
+    required: true    
+  aws_region:
+    description: "AWS region"
+    required: false
+    default: "us-west-2"
+  aws_role_to_assume: 
+    description: "AWS IAM role to assume"
+    required: true
+  timeout:
+    description: "Timeout rules for service"
+    default: 30
+  
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-node@v3
+      with:
+        node-version: '16'
+
+    - run: npm ci
+      shell: bash
+
+    - run: npm i -g serverless
+      shell: bash
+
+    - name: Configure AWS credentials for deployment
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        role-to-assume: ${{ inputs.aws_role_to_assume }}
+        aws-region: ${{ inputs.aws_region }}
+
+    - name: serverless deploy
+      run: sls deploy --stage ${{ inputs.service_stage }} --region ${{ inputs.aws_region }} --verbose 
+      env:
+        SERVICE_NAME: ${{ inputs.service_name }}        
+      shell: bash

@@ -14,25 +14,9 @@ inputs:
   aws_role_to_assume: 
     description: "AWS IAM role to assume"
     required: true
-  min_instances:
-    description: "Minimum number of instances to launch"
-    default: 1
-  max_instances:
-    description: "Maximum number of instances to launch"
-    default: 100
   timeout:
     description: "Timeout rules for service"
     default: 30
-  memory:
-    description: "RAM size in Mb (e.g. 512, 1024, 2048)"
-    default: "512Mi"
-  cpu:
-    description: "Number of vCPU core"
-    default: 1
-  tags:
-    description: "AWS Labels, Formatted like: environment=staging,service=my_service,etc.."
-    required: false
-    default: ""
   apollo_graph_ref:
     description: "Apollo graph ref"
     required: true
@@ -49,24 +33,15 @@ runs:
     - uses: actions/setup-node@v3
       with:
         node-version: '16'
-    
-    - run: npm ci
-      shell: bash
 
-    - run: npm i -g serverless
-      shell: bash
-
-    - name: Configure AWS credentials for deployment
-      uses: aws-actions/configure-aws-credentials@v1
+    - name: Build and deploy Serverless Lambda
+      uses: keplerscience/actions/deploy_serverless_lambda@main
       with:
-        role-to-assume: ${{ inputs.aws_role_to_assume }}
-        aws-region: ${{ inputs.aws_region }}
-
-    - name: serverless deploy
-      run: sls deploy --stage ${{ inputs.service_stage }} --region ${{ inputs.aws_region }} --verbose 
-      env:
-        SERVICE_NAME: ${{ inputs.service_name }}        
-      shell: bash
+        service_name: ${{ inputs.service_name }}
+        service_stage: ${{ inputs.service_stage }}
+        aws_region: ${{ inputs.aws_region }}
+        aws_role_to_assume: ${{ inputs.aws_role_to_assume }}
+        timeout: ${{ inputs.timeout }}
         
     - name: Get apollo args
       id: apollo_args
