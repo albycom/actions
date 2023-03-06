@@ -26,6 +26,9 @@ inputs:
   apollo_routing_url:
     description: "Apollo routing URL"
     required: true
+  gql_lambda_function:
+    description: "Name of the AWS Lambda for GraphQL"
+    required: true
 
 runs:
   using: "composite"
@@ -41,8 +44,26 @@ runs:
         service_stage: ${{ inputs.service_stage }}
         aws_region: ${{ inputs.aws_region }}
         aws_role_to_assume: ${{ inputs.aws_role_to_assume }}
-        timeout: ${{ inputs.timeout }}
-        
+        timeout: ${{ inputs.timeout }}      
+
+    - name: Install AWS CLI
+      run: |
+        pip install awscli
+      shell: bash
+
+    - name: Get Lambda function URL
+      id: get_endpoint
+      run: |
+        ENDPOINT=$(aws lambda get-function --function-name ${{ inputs.gql_lambda_function }} --query 'Configuration.Endpoint' --output text)
+        echo "::set-output name=endpoint::$ENDPOINT"
+      shell: bash
+
+    - name: Use Lambda function URL
+      run: |
+        ENDPOINT=$get_endpoint.outputs.endpoint
+        echo "Using Lambda function URL: $ENDPOINT"
+      shell: bash
+
     - name: Get apollo args
       id: apollo_args
       run: |-
