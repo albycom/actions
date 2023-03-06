@@ -31,10 +31,6 @@ runs:
     - run: npm i -g serverless
       shell: bash
 
-    - name: Install jq
-      run: sudo apt-get install -y jq
-      shell: bash
-
     - name: Configure AWS credentials for deployment
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -45,15 +41,4 @@ runs:
       run: sls deploy --stage ${{ inputs.service_stage }} --region ${{ inputs.aws_region }} --verbose 
       env:
         SERVICE_NAME: ${{ inputs.service_name }}        
-      shell: bash
-
-    - name: Extract Service URL from Serverless manifest
-      id: service_url
-      run: |
-        URL=$(jq -r '.${{ inputs.service_stage }}.outputs[] | select(.OutputKey == "ServiceEndpoint") | .OutputValue' .serverless/manifest.json)
-        echo "URL: $URL"
-      shell: bash
-
-    - name: Show service URL
-      run: 'echo "Service URL ${{ steps.service_url.outputs.URL }}"'
       shell: bash
