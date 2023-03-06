@@ -46,28 +46,16 @@ runs:
         aws_role_to_assume: ${{ inputs.aws_role_to_assume }}
         timeout: ${{ inputs.timeout }}      
 
-    - name: Install AWS CLI
-      run: |
-        pip install awscli
-      shell: bash
-
     - name: Get Lambda function URL
-      id: get_endpoint
+      id: get_lambda_url
       run: |
-        ENDPOINT=$(aws lambda get-function --function-name ${{ inputs.gql_lambda_function }} --query 'Configuration.Endpoint' --output text)
-        echo "::set-output name=endpoint::$ENDPOINT"
-      shell: bash
-
-    - name: Use Lambda function URL
-      run: |
-        ENDPOINT=$get_endpoint.outputs.endpoint
-        echo "Using Lambda function URL: $ENDPOINT"
+        echo "GQL_ROUTING_URL=$(aws lambda get-function --function-name ${{ inputs.gql_lambda_function }} --query 'Configuration.Endpoint' --output text)/v1/graphql" >> $GITHUB_ENV
       shell: bash
 
     - name: Get apollo args
       id: apollo_args
       run: |-
-        echo "GQL_ROUTING_URL=${{ inputs.apollo_routing_url }}" >> ${GITHUB_ENV}
+        # echo "GQL_ROUTING_URL=${{ inputs.apollo_routing_url }}" >> ${GITHUB_ENV}
         echo "APOLLO_KEY=${{ inputs.apollo_key }}" >> ${GITHUB_ENV}        
       shell: bash
 
@@ -81,5 +69,5 @@ runs:
 
     - name: Publish Schema to Studio using rover
       run: |-
-        rover subgraph introspect ${{ inputs.apollo_routing_url }} | rover subgraph publish ${{ inputs.apollo_graph_ref }} --name ${{ inputs.service_name }} --schema - --routing-url ${{ inputs.apollo_routing_url }}
+        rover subgraph introspect ${{ env.GQL_ROUTING_URL }} | rover subgraph publish ${{ inputs.apollo_graph_ref }} --name ${{ inputs.service_name }} --schema - --routing-url ${{ env.GQL_ROUTING_URL }}
       shell: bash
