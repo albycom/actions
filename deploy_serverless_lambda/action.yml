@@ -33,6 +33,7 @@ runs:
 
     - name: Install jq
       run: sudo apt-get install -y jq
+      shell: bash
 
     - name: Configure AWS credentials for deployment
       uses: aws-actions/configure-aws-credentials@v1
