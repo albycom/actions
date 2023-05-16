@@ -1,5 +1,5 @@
-name: "Deploy Serverless AWS Lambda"
-description: "Deploys Serverless Lambda"
+name: "Deploy Serverless AWS ECS"
+description: "Deploys Terraform ECS"
 inputs:
   service_name:
     description: "service name"
@@ -33,5 +33,10 @@ runs:
         terraform_version: 1.4.6
 
     - name: ECS deploy via Terraform
-      run: cd terraform/deployment; terraform init; terraform apply -auto-approve -var-file=staging/staging_us-west-2.tfvars -var='github_role_arn_root=${{ inputs.aws_role_to_assume_root }}' -var='github_role_arn=${{ inputs.aws_role_to_assume_env }}'
+      run: | 
+        cd terraform/deployment
+        terraform init
+        terraform apply -auto-approve -var-file=staging/staging_us-west-2.tfvars \
+                                      -var='github_role_arn_root=${{ inputs.aws_role_to_assume_root }}' \ 
+                                      -var='github_role_arn=${{ inputs.aws_role_to_assume_env }}'
       shell: bash
