@@ -36,7 +36,7 @@ runs:
       run: | 
         cd terraform/deployment
         terraform init
-        terraform apply -auto-approve -var-file=staging/staging_us-west-2.tfvars \
+        terraform apply -auto-approve -var-file=${{ inputs.service_stage }}/${{ inputs.service_stage }}_us-west-2.tfvars \
                                       -var='github_role_arn_root=${{ inputs.aws_role_to_assume_root }}' \ 
                                       -var='github_role_arn=${{ inputs.aws_role_to_assume_env }}'
       shell: bash
