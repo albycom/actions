@@ -44,6 +44,5 @@ runs:
         terraform init -backend-config=${{ inputs.service_stage }}/${{ inputs.service_stage }}_${{ inputs.aws_region }}_backend_config.tfvars 
         terraform plan -var-file=${{ inputs.service_stage }}/${{ inputs.service_stage }}_${{ inputs.aws_region }}.tfvars 
         terraform apply -auto-approve -var-file=${{ inputs.service_stage }}/${{ inputs.service_stage }}_${{ inputs.aws_region }}.tfvars \
-                                      -var='github_role_arn_root=${{ inputs.aws_role_to_assume_root }}' \ 
-                                      -var='github_role_arn=${{ inputs.aws_role_to_assume_env }}'
+                                      -var='github_role_arn_root=${{ inputs.aws_role_to_assume_root }}'
       shell: bash
