@@ -11,8 +11,11 @@ inputs:
     description: "AWS region"
     required: false
     default: "us-west-2"
-  aws_role_to_assume_root:
-    description: "AWS IAM role in root env to assume"
+  route53_access_key:
+    description: "route53 access key"
+    required: true
+  route53_secret_key:
+    description: "route53 secret key"
     required: true
   aws_role_to_assume_env:
     description: "AWS IAM role in deployment env to assume"
@@ -44,7 +47,8 @@ runs:
         service_name: ${{ inputs.service_name }}
         service_stage: ${{ inputs.service_stage }}
         aws_region: ${{ inputs.aws_region }}
-        aws_role_to_assume_root: ${{ inputs.aws_role_to_assume_root }}
+        route53_access_key: ${{ inputs.route53_access_key }}
+        route53_secret_key: ${{ inputs.route53_secret_key }}
         aws_role_to_assume_env: ${{ inputs.aws_role_to_assume_env }}
         timeout: ${{ inputs.timeout }}
 
