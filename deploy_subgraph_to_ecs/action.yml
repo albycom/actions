@@ -1,0 +1,73 @@
+name: "Deploy GraphQL subgraph to AWS ECS"
+description: "Deploys GQL Subgraph ECS"
+inputs:
+  service_name:
+    description: "service name"
+    required: true
+  service_stage:
+    description: "service stage"
+    required: true
+  aws_region:
+    description: "AWS region"
+    required: false
+    default: "us-west-2"
+  route53_access_key:
+    description: "route53 access key"
+    required: true
+  route53_secret_key:
+    description: "route53 secret key"
+    required: true
+  aws_role_to_assume_env:
+    description: "AWS IAM role in deployment env to assume"
+    required: true
+  timeout:
+    description: "Timeout rules for service"
+    default: 30
+  apollo_graph_ref:
+    description: "Apollo graph ref"
+    required: true
+  apollo_key:
+    description: "Apollo API key"
+    required: true
+  apollo_routing_url:
+    description: "Apollo routing URL"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-node@v3
+      with:
+        node-version: '16'
+
+    - name: Build and deploy Terraform ECS
+      # TODO: CHANGE DEVELOP TO main
+      uses: albycom/actions/deploy_terraform_ecs@develop
+      with:
+        service_name: ${{ inputs.service_name }}
+        service_stage: ${{ inputs.service_stage }}
+        aws_region: ${{ inputs.aws_region }}
+        route53_access_key: ${{ inputs.route53_access_key }}
+        route53_secret_key: ${{ inputs.route53_secret_key }}
+        aws_role_to_assume_env: ${{ inputs.aws_role_to_assume_env }}
+        timeout: ${{ inputs.timeout }}
+
+    - name: Get apollo args
+      id: apollo_args
+      run: |
+        echo "GQL_ROUTING_URL=${{ inputs.apollo_routing_url }}" >> ${GITHUB_ENV}
+        echo "APOLLO_KEY=${{ inputs.apollo_key }}" >> ${GITHUB_ENV}
+      shell: bash
+
+    - name: Install Rover
+      run: |
+        curl -sSL https://rover.apollo.dev/nix/v0.1.0 | sh
+        # Add Rover to the $GITHUB_PATH so it can be used in another step
+        # https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#adding-a-system-path
+        echo "$HOME/.rover/bin" >> $GITHUB_PATH
+      shell: bash
+
+    - name: Publish Schema to Studio using rover
+      run: |
+        rover subgraph introspect ${{ env.GQL_ROUTING_URL }} | rover subgraph publish ${{ inputs.apollo_graph_ref }} --name ${{ inputs.service_name }} --schema - --routing-url ${{ env.GQL_ROUTING_URL }}
+      shell: bash
