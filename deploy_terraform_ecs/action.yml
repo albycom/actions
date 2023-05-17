@@ -43,7 +43,7 @@ runs:
 
     - name: temporary unlock
       shell: bash
-      run: terraform force-unlock 084fbd8b-2822-8921-3fda-f2ebb871ad5e
+      run: terraform force-unlock -force 084fbd8b-2822-8921-3fda-f2ebb871ad5e
 
     - name: ECS deploy via Terraform
       run: | 
