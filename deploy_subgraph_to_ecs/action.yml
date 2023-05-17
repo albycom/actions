@@ -41,8 +41,7 @@ runs:
         node-version: '16'
 
     - name: Build and deploy Terraform ECS
-      # TODO: CHANGE DEVELOP TO main
-      uses: albycom/actions/deploy_terraform_ecs@develop
+      uses: albycom/actions/deploy_terraform_ecs@main
       with:
         service_name: ${{ inputs.service_name }}
         service_stage: ${{ inputs.service_stage }}
