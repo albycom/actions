@@ -32,6 +32,9 @@ inputs:
   apollo_routing_url:
     description: "Apollo routing URL"
     required: true
+  service_env_vars:
+    description: "env vars passed into ECS"
+    default: ""
 
 runs:
   using: "composite"
@@ -50,6 +53,7 @@ runs:
         route53_secret_key: ${{ inputs.route53_secret_key }}
         aws_role_to_assume_env: ${{ inputs.aws_role_to_assume_env }}
         timeout: ${{ inputs.timeout }}
+        service_env_vars: ${{ inputs.service_env_vars }}
 
     - name: Get apollo args
       id: apollo_args
