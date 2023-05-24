@@ -38,7 +38,7 @@ runs:
       uses: aws-actions/configure-aws-credentials@v1
       with:
         role-to-assume: ${{ inputs.aws_role_to_assume_env }}
-        aws-region: ${{ input.aws_region }}
+        aws-region: ${{ inputs.aws_region }}
 
     #####################################################
     ############## Run ECR Upload Steps #################
@@ -110,7 +110,7 @@ runs:
 
     - name: Verify Docker image tag in ECS Task Definition
       run: |
-        aws ecs describe-task-definition --task-definition ${{ input.service_name }}-fargate-task > task-definition.json
+        aws ecs describe-task-definition --task-definition ${{ inputs.service_name }}-fargate-task > task-definition.json
         TASKDEFINITION_IMAGETAG=$(jq -r '.taskDefinition.containerDefinitions[0].image' task-definition.json | cut -d ":" -f 2)
         if [ "$TASKDEFINITION_IMAGETAG" = "${{ env.DOCKER_IMAGE_TAG }}" ]; then
           echo "Image tags match."
