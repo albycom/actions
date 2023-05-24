@@ -20,10 +20,6 @@ inputs:
   aws_role_to_assume_env:
     description: "AWS IAM role in deployment env to assume"
     required: true
-  docker_image_tag:
-    description: "Docker Image Tag for ECS"
-    required: false
-    default: "latest"
   timeout:
     description: "Timeout rules for service"
     default: 30
@@ -37,16 +33,52 @@ runs:
     - name: Checkout
       uses: actions/checkout@v2
 
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        role-to-assume: ${{ inputs.aws_role_to_assume_env }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    #####################################################
+    ############## Run ECR Upload Steps #################
+    #####################################################
+    # Login to AWS ECR
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    # Set the timestamp
+    - name: Get the current date for the image tag
+      id: date
+      run: echo "::set-output name=IMAGE_TAG::$(date +'%Y%m%d%H%M%S')"
+
+    # Build, Tag, and Push the Docker image
+    - name: Build, tag, and push image to Amazon ECR
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ input.service_name }}
+        IMAGE_TAG: ${{ steps.date.outputs.IMAGE_TAG }}
+        SERVICE_NAME: ${{ input.service_name }}
+      run: |
+        pwd
+        ls -al
+        docker buildx build --platform=linux/amd64 -f ./src/Dockerfile -t "$SERVICE_NAME" ./src/
+        docker tag "$SERVICE_NAME" "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+        docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+    - name: Pass Docker image tag to the environment
+      env:
+        IMAGE_TAG: ${{ steps.date.outputs.IMAGE_TAG }}
+      run: echo "DOCKER_IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+
+    #####################################################
+    ############## Run Terraform Steps ##################
+    #####################################################
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v1
       with:
         terraform_version: 1.4.6
-
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        role-to-assume: ${{ inputs.aws_role_to_assume_env }}
-        aws-region: ${{ inputs.aws_region }}
 
     - name: ECS deploy via Terraform
       run: | 
@@ -56,10 +88,29 @@ runs:
                                       -var "route53_access_key=${{ inputs.route53_access_key }}" \
                                       -var "route53_secret_key=${{ inputs.route53_secret_key }}" \
                                       -var "service_env_vars=${{ inputs.service_env_vars }}" \
-                                      -var "docker_image_tag=${{ inputs.docker_image_tag }}"
+                                      -var "docker_image_tag=${{ env.DOCKER_IMAGE_TAG }}"
         terraform apply -auto-approve -var-file=${{ inputs.service_stage }}/${{ inputs.service_stage }}_${{ inputs.aws_region }}.tfvars \
                                       -var "route53_access_key=${{ inputs.route53_access_key }}" \
                                       -var "route53_secret_key=${{ inputs.route53_secret_key }}" \
                                       -var "service_env_vars=${{ inputs.service_env_vars }}" \
-                                      -var "docker_image_tag=${{ inputs.docker_image_tag }}"
+                                      -var "docker_image_tag=${{ env.DOCKER_IMAGE_TAG }}"
       shell: bash
+
+    #####################################################
+    ############# Run Validation Steps ##################
+    #####################################################
+    - name: Install jq
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y jq
+
+    - name: Verify Docker image tag in ECS Task Definition
+      run: |
+        aws ecs describe-task-definition --task-definition ${{ input.service_name }}-fargate-task > task-definition.json
+        TASKDEFINITION_IMAGETAG=$(jq -r '.taskDefinition.containerDefinitions[0].image' task-definition.json | cut -d ":" -f 2)
+        if [ "$TASKDEFINITION_IMAGETAG" = "${{ env.DOCKER_IMAGE_TAG }}" ]; then
+          echo "Image tags match."
+        else
+          echo "Error: Image tags do not match."
+          exit 1
+        fi
