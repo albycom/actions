@@ -35,6 +35,10 @@ inputs:
   service_env_vars:
     description: "env vars passed into ECS"
     default: ""
+  docker_image_tag:
+    description: "Docker Image Tag for ECS"
+    required: false
+    default: "latest"
 
 runs:
   using: "composite"
@@ -54,6 +58,7 @@ runs:
         aws_role_to_assume_env: ${{ inputs.aws_role_to_assume_env }}
         timeout: ${{ inputs.timeout }}
         service_env_vars: ${{ inputs.service_env_vars }}
+        docker_image_tag: ${{ inputs.docker_image_tag }}
 
     - name: Get apollo args
       id: apollo_args
