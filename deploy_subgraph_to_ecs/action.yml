@@ -80,6 +80,19 @@ runs:
         role-to-assume: ${{ inputs.aws_role_to_assume_env }}
         aws-region: ${{ inputs.aws_region }}
 
+    - name: Install jq
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y jq
+      shell: bash
+
+    - name: Install AWS CLI
+      run: |
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+        unzip awscliv2.zip
+        sudo ./aws/install
+      shell: bash
+    
     - name: Check ECS service deployment
       run: |
         attempts=0
@@ -88,7 +101,24 @@ runs:
           response=$(aws ecs describe-services --region ${{ inputs.aws_region }} --services ${{ inputs.service_name }})
           activeTaskDefinition=$(jq -r '.services[0].taskDefinition' <<< "${response}")
           activeImageTag=$(aws ecs describe-task-definition --task-definition $${activeTaskDefinition} | jq -r '.taskDefinition.containerDefinitions[0].image' | cut -d: -f2)
-    
+          
+          # Add logic to check if the active image tag matches the deployed docker image tag
+          if [[ "$activeImageTag" == "${{ inputs.docker_image_tag }}" ]]; then
+            echo "ECR image deployed successfully."
+            break
+          else
+            if ((attempts == 19)); then
+              echo "ECR image not deploying after 20 attempts. Exiting."
+              exit 1
+            else
+              echo "Waiting for ECR image to deploy..."
+              sleep 30
+            fi
+          fi
+          ((attempts++))
+        done
+      shell: bash
+
     - name: Publish Schema to Studio using rover
       run: |
         rover subgraph introspect ${{ env.GQL_ROUTING_URL }} | rover subgraph publish ${{ inputs.apollo_graph_ref }} --name ${{ inputs.service_name }} --schema - --routing-url ${{ env.GQL_ROUTING_URL }}
