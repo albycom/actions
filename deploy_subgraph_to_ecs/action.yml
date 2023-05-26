@@ -35,6 +35,10 @@ inputs:
   service_env_vars:
     description: "env vars passed into ECS"
     default: ""
+  docker_image_tag:
+    description: "Docker image tag that has been deployed"
+    required: false
+    default: "latest"
 
 runs:
   using: "composite"
@@ -70,6 +74,21 @@ runs:
         echo "$HOME/.rover/bin" >> $GITHUB_PATH
       shell: bash
 
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        role-to-assume: ${{ inputs.aws_role_to_assume_env }}
+        aws-region: ${{ inputs.aws_region }}
+
+    - name: Check ECS service deployment
+      run: |
+        attempts=0
+        while ((attempts < 20))
+        do
+          response=$(aws ecs describe-services --region ${{ inputs.aws_region }} --services ${{ inputs.service_name }})
+          activeTaskDefinition=$(jq -r '.services[0].taskDefinition' <<< "${response}")
+          activeImageTag=$(aws ecs describe-task-definition --task-definition $${activeTaskDefinition} | jq -r '.taskDefinition.containerDefinitions[0].image' | cut -d: -f2)
+    
     - name: Publish Schema to Studio using rover
       run: |
         rover subgraph introspect ${{ env.GQL_ROUTING_URL }} | rover subgraph publish ${{ inputs.apollo_graph_ref }} --name ${{ inputs.service_name }} --schema - --routing-url ${{ env.GQL_ROUTING_URL }}
