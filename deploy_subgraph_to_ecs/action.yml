@@ -92,10 +92,29 @@ runs:
         while ((attempts < 20))
         do
           response=$(aws ecs describe-services --region ${{ inputs.aws_region }} --services ${{ inputs.service_name }}-fargate-cluster)
-          activeTaskDefinition=$(jq -r '.services[0].taskDefinition' <<< "${response}")
-          activeImageTag=$(aws ecs describe-task-definition --task-definition $${activeTaskDefinition} | jq -r '.taskDefinition.containerDefinitions[0].image' | cut -d: -f2)
+          if [[ $? -ne 0 ]]; then
+            echo "Failed to describe services"
+            exit 1
+          fi
           
-          # Add logic to check if the active image tag matches the deployed docker image tag
+          activeTaskDefinition=$(jq -r '.services[0].taskDefinition' <<< "${response}")
+          if [[ $? -ne 0 ]]; then
+            echo "Failed to parse JSON using jq"
+            exit 1
+          fi
+          
+          response=$(aws ecs describe-task-definition --task-definition ${activeTaskDefinition})
+          if [[ $? -ne 0 ]]; then
+            echo "Failed to describe task definition"
+            exit 1
+          fi
+          
+          activeImageTag=$(echo ${response} | jq -r '.taskDefinition.containerDefinitions[0].image' | cut -d: -f2)
+          if [[ $? -ne 0 ]]; then
+            echo "Failed to parse JSON using jq or cut"
+            exit 1
+          fi
+          
           if [[ "$activeImageTag" == "${{ inputs.docker_image_tag }}" ]]; then
             echo "ECR image deployed successfully."
             break
