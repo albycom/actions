@@ -91,7 +91,7 @@ runs:
         attempts=0
         while ((attempts < 20))
         do
-          response=$(aws ecs describe-services --region ${{ inputs.aws_region }} --cluster ${{ inputs.service_name }}-fargate-cluster) --services ${{ inputs.service_name }}-fargate-service)
+          response=$(aws ecs describe-services --region ${{ inputs.aws_region }} --cluster ${{ inputs.service_name }}-fargate-cluster --services ${{ inputs.service_name }}-fargate-service)
           if [[ $? -ne 0 ]]; then
             echo "Failed to describe services"
             exit 1
