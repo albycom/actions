@@ -1,0 +1,62 @@
+name: "Deploy Auth Gateway"
+description: "Deploys Auth Gateway"
+inputs:
+  service_name:
+    description: "service name"
+    required: true
+  service_stage:
+    description: "service stage"
+    required: true
+  aws_region:
+    description: "AWS region"
+    required: false
+    default: "us-west-2"
+  route53_access_key:
+    description: "route53 access key"
+    required: true
+  route53_secret_key:
+    description: "route53 secret key"
+    required: true
+  aws_role_to_assume_env:
+    description: "AWS IAM role in deployment env to assume"
+    required: true
+  timeout:
+    description: "Timeout rules for service"
+    default: 30
+  service_env_vars:
+    description: "env vars passed into ECS"
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        role-to-assume: ${{ inputs.aws_role_to_assume_env }}
+        aws-region: ${{ inputs.aws_region }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: 1.4.6
+
+    - name: Auth Gateway deploy via Terraform
+      run: |
+        cd terraform/deployment
+        terraform init -backend-config=${{ inputs.service_stage }}/${{ inputs.service_stage }}_${{ inputs.aws_region }}_backend_config.tfvars 
+        terraform plan -var-file=${{ inputs.service_stage }}/${{ inputs.service_stage }}_${{ inputs.aws_region }}.tfvars \
+                                      -var "route53_access_key=${{ inputs.route53_access_key }}" \
+                                      -var "route53_secret_key=${{ inputs.route53_secret_key }}" \
+                                      -var "service_env_vars=${{ inputs.service_env_vars }}" \
+                                      -var "docker_image_tag=${{ env.DOCKER_IMAGE_TAG }}"
+        terraform apply -auto-approve -var-file=${{ inputs.service_stage }}/${{ inputs.service_stage }}_${{ inputs.aws_region }}.tfvars \
+                                      -var "route53_access_key=${{ inputs.route53_access_key }}" \
+                                      -var "route53_secret_key=${{ inputs.route53_secret_key }}" \
+                                      -var "service_env_vars=${{ inputs.service_env_vars }}" \
+                                      -var "docker_image_tag=${{ env.DOCKER_IMAGE_TAG }}"
+      shell: bash
