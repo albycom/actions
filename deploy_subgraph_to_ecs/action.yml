@@ -91,7 +91,7 @@ runs:
         attempts=0
         while ((attempts < 20))
         do
-          response=$(aws ecs describe-services --region ${{ inputs.aws_region }} --services ${{ inputs.service_name }})
+          response=$(aws ecs describe-services --region ${{ inputs.aws_region }} --services ${{ inputs.service_name }}-fargate-cluster)
           activeTaskDefinition=$(jq -r '.services[0].taskDefinition' <<< "${response}")
           activeImageTag=$(aws ecs describe-task-definition --task-definition $${activeTaskDefinition} | jq -r '.taskDefinition.containerDefinitions[0].image' | cut -d: -f2)
           
