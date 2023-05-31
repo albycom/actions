@@ -35,10 +35,6 @@ inputs:
   service_env_vars:
     description: "env vars passed into ECS"
     default: ""
-  docker_image_tag:
-    description: "Docker image tag that has been deployed"
-    required: false
-    default: "latest"
 
 runs:
   using: "composite"
@@ -72,63 +68,6 @@ runs:
         # Add Rover to the $GITHUB_PATH so it can be used in another step
         # https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#adding-a-system-path
         echo "$HOME/.rover/bin" >> $GITHUB_PATH
-      shell: bash
-
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        role-to-assume: ${{ inputs.aws_role_to_assume_env }}
-        aws-region: ${{ inputs.aws_region }}
-
-    - name: Install jq
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y jq
-      shell: bash
-    
-    - name: Check ECS service deployment
-      run: |
-        attempts=0
-        while ((attempts < 20))
-        do
-          response=$(aws ecs describe-services --region ${{ inputs.aws_region }} --cluster ${{ inputs.service_name }}-fargate-cluster --services ${{ inputs.service_name }}-fargate-service)
-          if [[ $? -ne 0 ]]; then
-            echo "Failed to describe services"
-            exit 1
-          fi
-          
-          activeTaskDefinition=$(jq -r '.services[0].taskDefinition' <<< "${response}")
-          if [[ $? -ne 0 ]]; then
-            echo "Failed to parse JSON using jq"
-            exit 1
-          fi
-          
-          response=$(aws ecs describe-task-definition --task-definition ${activeTaskDefinition})
-          if [[ $? -ne 0 ]]; then
-            echo "Failed to describe task definition"
-            exit 1
-          fi
-          
-          activeImageTag=$(echo ${response} | jq -r '.taskDefinition.containerDefinitions[0].image' | cut -d: -f2)
-          if [[ $? -ne 0 ]]; then
-            echo "Failed to parse JSON using jq or cut"
-            exit 1
-          fi
-          
-          if [[ "$activeImageTag" == "${{ inputs.docker_image_tag }}" ]]; then
-            echo "ECR image deployed successfully."
-            break
-          else
-            if ((attempts == 19)); then
-              echo "ECR image not deploying after 20 attempts. Exiting."
-              exit 1
-            else
-              echo "Waiting for ECR image to deploy..."
-              sleep 30
-            fi
-          fi
-          ((attempts++))
-        done
       shell: bash
 
     - name: Publish Schema to Studio using rover
