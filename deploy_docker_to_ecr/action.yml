@@ -17,6 +17,10 @@ inputs:
   timeout:
     description: "Timeout rules for service"
     default: 30
+  docker_file_name:
+    description: "name of docker file in src/"
+    required: false
+    default: "Dockerfile"
 
 runs:
   using: "composite"
