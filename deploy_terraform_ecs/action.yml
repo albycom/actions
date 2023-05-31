@@ -40,58 +40,56 @@ runs:
         role-to-assume: ${{ inputs.aws_role_to_assume_env }}
         aws-region: ${{ inputs.aws_region }}
 
-#    #####################################################
-#    ############## Run ECR Upload Steps #################
-#    #####################################################
-#    # Login to AWS ECR
-#    - name: Login to Amazon ECR
-#      id: login-ecr
-#      uses: aws-actions/amazon-ecr-login@v1
+    #####################################################
+    ############## Run ECR Upload Steps #################
+    #####################################################
+    # Login to AWS ECR
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    # Set the timestamp
+    - name: Get the current date for the image tag
+      id: date
+      run: echo "::set-output name=IMAGE_TAG::$(date +'%Y%m%d%H%M%S')"
+      shell: bash
+
+    # Build, Tag, and Push the Docker image
+    - name: Build, tag, and push image to Amazon ECR
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ inputs.service_name }}
+        IMAGE_TAG: ${{ steps.date.outputs.IMAGE_TAG }}
+        SERVICE_NAME: ${{ inputs.service_name }}
+      run: |
+        pwd
+        ls -al
+        docker buildx build --platform=linux/amd64 -f ./src/Dockerfile -t "$SERVICE_NAME" ./src/
+        docker tag "$SERVICE_NAME" "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+        docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+      shell: bash
+
+    - name: Pass Docker image tag to the environment
+      env:
+        IMAGE_TAG: ${{ steps.date.outputs.IMAGE_TAG }}
+      run: echo "DOCKER_IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+      shell: bash
+
+#    - name: Push to ECR
+#      id: ecs-ecr-push
+#      uses: albycom/actions/deploy_docker_to_ecr@main
+#      with:
+#        service_name: ${{ inputs.service_name }}
+#        service_stage: ${{ inputs.service_stage }}
+#        aws_region: ${{ inputs.aws_region }}
+#        aws_role_to_assume: ${{ inputs.aws_role_to_assume }}
+#        timeout: ${{ inputs.timeout }}
 #
-#    # Set the timestamp
-#    - name: Get the current date for the image tag
-#      id: date
-#      run: echo "::set-output name=IMAGE_TAG::$(date +'%Y%m%d%H%M%S')"
-#      shell: bash
-#
-#    # Build, Tag, and Push the Docker image
-#    - name: Build, tag, and push image to Amazon ECR
+#    - name: Pass docker tag
 #      env:
-#        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-#        ECR_REPOSITORY: ${{ inputs.service_name }}
-#        IMAGE_TAG: ${{ steps.date.outputs.IMAGE_TAG }}
-#        SERVICE_NAME: ${{ inputs.service_name }}
-#      run: |
-#        pwd
-#        ls -al
-#        docker buildx build --platform=linux/amd64 -f ./src/Dockerfile -t "$SERVICE_NAME" ./src/
-#        docker tag "$SERVICE_NAME" "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
-#        docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
-#      shell: bash
-#
-#    - name: Pass Docker image tag to the environment
-#      env:
-#        IMAGE_TAG: ${{ steps.date.outputs.IMAGE_TAG }}
+#        IMAGE_TAG: ${{ steps.ecs-ecr-push.outputs.dock_img_tag }}
 #      run: echo "DOCKER_IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
 #      shell: bash
-
-    - name: Build and deploy Serverless Lambda
-      id: ecs-ecr-push
-      uses: albycom/actions/deploy_docker_to_ecr@main
-      with:
-        service_name: ${{ inputs.service_name }}
-        service_stage: ${{ inputs.service_stage }}
-        aws_region: ${{ inputs.aws_region }}
-        aws_role_to_assume: ${{ inputs.aws_role_to_assume }}
-        timeout: ${{ inputs.timeout }}
-
-    - name: Pass docker tag
-      env:
-        IMAGE_TAG: ${{ steps.ecs-ecr-push.outputs.dock_img_tag }}
-      run: |
-        echo $IMAGE_TAG
-        echo "DOCKER_IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
-      shell: bash
 
     #####################################################
     ############## Run Terraform Steps ##################
