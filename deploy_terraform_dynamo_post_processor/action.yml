@@ -100,6 +100,22 @@ runs:
         docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
       shell: bash
 
+
+    # Build, Tag, and Push the Docker image for image post processor
+    - name: Build, tag, and push image to image post processor lambda
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ inputs.image_post_processor_repo }}
+        IMAGE_TAG: ${{ steps.date.outputs.IMAGE_TAG }}
+        SERVICE_NAME: ${{ inputs.image_post_processor_repo }}
+      run: |
+        pwd
+        ls -al
+        docker buildx build --platform=linux/amd64 -f ./src/${{ inputs.image_post_processor_file }} -t "$SERVICE_NAME" ./src/
+        docker tag "$SERVICE_NAME" "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+        docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+      shell: bash
+
     #####################################################
     ############## Run Terraform Steps ##################
     #####################################################
