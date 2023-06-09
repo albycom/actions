@@ -29,6 +29,12 @@ inputs:
   vector_writer_repo:
     description: "ecr repo name of vector writer lambda img"
     required: true
+  image_post_processor_file:
+    description: "name of image post processor lambda docker in src/"
+    required: true
+  image_post_processor_repo:
+    description: "ecr repo name of image post processor lambda img"
+    required: true
 
 runs:
   using: "composite"
