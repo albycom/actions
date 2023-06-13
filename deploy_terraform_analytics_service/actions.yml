@@ -1,0 +1,129 @@
+name: "Deploy Serverless AWS ECS"
+description: "Deploys Terraform ECS"
+inputs:
+  service_name:
+    description: "service name"
+    required: true
+  service_stage:
+    description: "service stage"
+    required: true
+  aws_region:
+    description: "AWS region"
+    required: false
+    default: "us-west-2"
+  aws_role_to_assume_env:
+    description: "AWS IAM role in deployment env to assume"
+    required: true
+  timeout:
+    description: "Timeout rules for service"
+    default: 30
+  analytics_service_file:
+    description: "name of lambda analytics service docker in src/"
+    required: true
+  analytics_service_repo:
+    description: "ecr repo name of analytics service img"
+    required: true
+  analytics_event_forwarder_file:
+    description: "name of lambda analytics event forwarder docker in src/"
+    required: true
+  analytics_event_forwarder_repo:
+    description: "ecr repo name of analytics event forwarder lambda img"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        role-to-assume: ${{ inputs.aws_role_to_assume_env }}
+        aws-region: ${{ inputs.aws_region }}
+
+    #####################################################
+    ############## Run ECR Upload Steps #################
+    #####################################################
+    # Login to AWS ECR
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+
+    # Set the timestamp
+    - name: Get the current date for the image tag
+      id: date
+      run: echo "::set-output name=IMAGE_TAG::$(date +'%Y%m%d%H%M%S')"
+      shell: bash
+
+    # Set docker tag
+    - name: Pass Docker image tag to the environment
+      env:
+        IMAGE_TAG: ${{ steps.date.outputs.IMAGE_TAG }}
+      run: echo "DOCKER_IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+      shell: bash
+
+    # Build, Tag, and Push the Docker image for ddb processor lambda
+    - name: Build, tag, and push image to ddb processor lambda
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ inputs.ddb_processor_repo }}
+        IMAGE_TAG: ${{ steps.date.outputs.IMAGE_TAG }}
+        SERVICE_NAME: ${{ inputs.ddb_processor_repo }}
+      run: |
+        pwd
+        ls -al
+        docker buildx build --platform=linux/amd64 -f ./src/${{ inputs.ddb_processor_file }} -t "$SERVICE_NAME" ./src/
+        docker tag "$SERVICE_NAME" "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+        docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+      shell: bash
+
+    # Build, Tag, and Push the Docker image for vector writer lambda
+    - name: Build, tag, and push image to vector writer lambda
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ inputs.vector_writer_repo }}
+        IMAGE_TAG: ${{ steps.date.outputs.IMAGE_TAG }}
+        SERVICE_NAME: ${{ inputs.vector_writer_repo }}
+      run: |
+        pwd
+        ls -al
+        docker buildx build --platform=linux/amd64 -f ./src/${{ inputs.vector_writer_file }} -t "$SERVICE_NAME" ./src/
+        docker tag "$SERVICE_NAME" "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+        docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+      shell: bash
+
+
+    # Build, Tag, and Push the Docker image for image post processor
+    - name: Build, tag, and push image to image post processor lambda
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ inputs.image_post_processor_repo }}
+        IMAGE_TAG: ${{ steps.date.outputs.IMAGE_TAG }}
+        SERVICE_NAME: ${{ inputs.image_post_processor_repo }}
+      run: |
+        pwd
+        ls -al
+        docker buildx build --platform=linux/amd64 -f ./src/${{ inputs.image_post_processor_file }} -t "$SERVICE_NAME" ./src/
+        docker tag "$SERVICE_NAME" "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+        docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+      shell: bash
+
+    #####################################################
+    ############## Run Terraform Steps ##################
+    #####################################################
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_version: 1.4.6
+
+    - name: ECS deploy via Terraform
+      run: | 
+        echo "DOCKER_IMAGE_TAG ${{ env.DOCKER_IMAGE_TAG }}"
+        cd terraform/deployment
+        terraform init -backend-config=${{ inputs.service_stage }}/${{ inputs.service_stage }}_${{ inputs.aws_region }}_backend_config.tfvars 
+        terraform plan -var-file=${{ inputs.service_stage }}/${{ inputs.service_stage }}_${{ inputs.aws_region }}.tfvars \
+                                      -var "docker_image_tag=${{ env.DOCKER_IMAGE_TAG }}"
+        terraform apply -auto-approve -var-file=${{ inputs.service_stage }}/${{ inputs.service_stage }}_${{ inputs.aws_region }}.tfvars \
+                                      -var "docker_image_tag=${{ env.DOCKER_IMAGE_TAG }}"
+      shell: bash
