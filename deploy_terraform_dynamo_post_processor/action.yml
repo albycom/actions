@@ -23,12 +23,6 @@ inputs:
   ddb_processor_repo:
     description: "ecr repo name of ddb processor lambda img"
     required: true
-  vector_writer_file:
-    description: "name of vector writer lambda docker in src/"
-    required: true
-  vector_writer_repo:
-    description: "ecr repo name of vector writer lambda img"
-    required: true
   image_post_processor_file:
     description: "name of image post processor lambda docker in src/"
     required: true
@@ -81,21 +75,6 @@ runs:
         pwd
         ls -al
         docker buildx build --platform=linux/amd64 -f ./src/${{ inputs.ddb_processor_file }} -t "$SERVICE_NAME" ./src/
-        docker tag "$SERVICE_NAME" "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
-        docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
-      shell: bash
-
-    # Build, Tag, and Push the Docker image for vector writer lambda
-    - name: Build, tag, and push image to vector writer lambda
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        ECR_REPOSITORY: ${{ inputs.vector_writer_repo }}
-        IMAGE_TAG: ${{ steps.date.outputs.IMAGE_TAG }}
-        SERVICE_NAME: ${{ inputs.vector_writer_repo }}
-      run: |
-        pwd
-        ls -al
-        docker buildx build --platform=linux/amd64 -f ./src/${{ inputs.vector_writer_file }} -t "$SERVICE_NAME" ./src/
         docker tag "$SERVICE_NAME" "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
         docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
       shell: bash
