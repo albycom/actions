@@ -70,17 +70,9 @@ runs:
         echo "$HOME/.rover/bin" >> $GITHUB_PATH
       shell: bash
 
-    # - name: Publish Schema to Studio using rover
-    #   run: |
-    #     rover subgraph introspect ${{ env.GQL_ROUTING_URL }} | rover subgraph publish ${{ inputs.apollo_graph_ref }} --name ${{ inputs.service_name }} --schema - --routing-url ${{ env.GQL_ROUTING_URL }}
-    #   shell: bash
-
-    - name: Continuously publish schema to Apollo Studio
+    - name: Publish Schema to Studio using rover
       run: |
-        for i in {1..10}; do
-          echo "Running Schema Publishing: $i"
-          rover subgraph introspect ${{ env.GQL_ROUTING_URL }} | rover subgraph publish ${{ inputs.apollo_graph_ref }} --name ${{ inputs.service_name }} --schema - --routing-url ${{ env.GQL_ROUTING_URL }}    
-          sleep 30
-        done
+        rover subgraph introspect ${{ env.GQL_ROUTING_URL }} | rover subgraph publish ${{ inputs.apollo_graph_ref }} --name ${{ inputs.service_name }} --schema - --routing-url ${{ env.GQL_ROUTING_URL }}
       shell: bash
+
         
