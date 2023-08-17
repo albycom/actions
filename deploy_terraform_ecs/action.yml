@@ -26,9 +26,6 @@ inputs:
   service_env_vars:
     description: "env vars passed into ECS"
     default: ""
-  ssh_key:
-    description: "SSH key to inject into docker build"
-    required: false
 
 runs:
   using: "composite"
@@ -70,7 +67,7 @@ runs:
       run: |
         pwd
         ls -al
-        DOCKER_BUILDKIT=1 docker buildx build --ssh default=$SSH_AUTH_SOCK --platform=linux/amd64 -f ./src/Dockerfile -t "$SERVICE_NAME" ./src/
+        docker buildx build --platform=linux/amd64 -f ./src/Dockerfile -t "$SERVICE_NAME" ./src/
         docker tag "$SERVICE_NAME" "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
         docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
       shell: bash
