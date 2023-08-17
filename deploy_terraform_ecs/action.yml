@@ -26,6 +26,9 @@ inputs:
   service_env_vars:
     description: "env vars passed into ECS"
     default: ""
+  ssh_key:
+    description: "SSH key to inject into docker build"
+    required: false
 
 runs:
   using: "composite"
@@ -33,6 +36,9 @@ runs:
     - name: Checkout
       uses: actions/checkout@v2
 
+    - uses: webfactory/ssh-agent@v0.7.0
+      with:
+          ssh-private-key: ${{ inputs.ssh_key }}
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
@@ -64,7 +70,7 @@ runs:
       run: |
         pwd
         ls -al
-        docker buildx build --platform=linux/amd64 -f ./src/Dockerfile -t "$SERVICE_NAME" ./src/
+        docker buildx build --ssh default=${{ inputs.ssh_key }} --platform=linux/amd64 -f ./src/Dockerfile -t "$SERVICE_NAME" ./src/
         docker tag "$SERVICE_NAME" "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
         docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
       shell: bash
