@@ -35,6 +35,9 @@ inputs:
   service_env_vars:
     description: "env vars passed into ECS"
     default: ""
+  ssh_key:
+    description: "SSH key to inject into docker build"
+    required: false
 
 runs:
   using: "composite"
@@ -54,6 +57,7 @@ runs:
         aws_role_to_assume_env: ${{ inputs.aws_role_to_assume_env }}
         timeout: ${{ inputs.timeout }}
         service_env_vars: ${{ inputs.service_env_vars }}
+        ssh_key: ${{ inputs.ssh_key }}
 
     - name: Get apollo args
       id: apollo_args
