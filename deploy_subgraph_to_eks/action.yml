@@ -1,5 +1,5 @@
-name: "Deploy GraphQL subgraph to AWS ECS"
-description: "Deploys GQL Subgraph ECS"
+name: "Deploy GraphQL subgraph to AWS EKS"
+description: "Deploys GQL Subgraph EKS"
 inputs:
   service_name:
     description: "service name"
@@ -27,7 +27,7 @@ inputs:
     description: "Apollo routing URL"
     required: true
   service_env_vars:
-    description: "env vars passed into ECS"
+    description: "env vars passed into EKS"
     default: ""
   ssh_key:
     description: "SSH key to inject into docker build"
@@ -66,9 +66,17 @@ runs:
         echo "$HOME/.rover/bin" >> $GITHUB_PATH
       shell: bash
 
-    - name: Publish Schema to Studio using rover
+    - name: Continuously publish schema to Apollo Studio
       run: |
-        rover subgraph introspect ${{ env.GQL_ROUTING_URL }} | rover subgraph publish ${{ inputs.apollo_graph_ref }} --name ${{ inputs.service_name }} --schema - --routing-url ${{ env.GQL_ROUTING_URL }}
-      shell: bash
+        for i in {1..10}; do
+          echo "Running Schema Publishing: $i"
+          rover subgraph introspect ${{ env.GQL_ROUTING_URL }} | rover subgraph publish ${{ inputs.apollo_graph_ref }} --name ${{ inputs.service_name }} --schema - --routing-url ${{ env.GQL_ROUTING_URL }}    
+          sleep 5
+        done
+
+    # - name: Publish Schema to Studio using rover
+    #   run: |
+    #     rover subgraph introspect ${{ env.GQL_ROUTING_URL }} | rover subgraph publish ${{ inputs.apollo_graph_ref }} --name ${{ inputs.service_name }} --schema - --routing-url ${{ env.GQL_ROUTING_URL }}
+    #   shell: bash
 
         
