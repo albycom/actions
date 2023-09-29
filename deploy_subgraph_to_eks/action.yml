@@ -73,6 +73,7 @@ runs:
           rover subgraph introspect ${{ env.GQL_ROUTING_URL }} | rover subgraph publish ${{ inputs.apollo_graph_ref }} --name ${{ inputs.service_name }} --schema - --routing-url ${{ env.GQL_ROUTING_URL }}    
           sleep 5
         done
+      shell: bash
 
     # - name: Publish Schema to Studio using rover
     #   run: |
