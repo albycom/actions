@@ -40,6 +40,8 @@ runs:
     - name: Install dependencies
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
       run: cd src && poetry install --no-interaction
+      shell: bash
+
     #----------------------------------------------
     #              run test suite
     #----------------------------------------------
@@ -50,6 +52,7 @@ runs:
       env:
         AWS_ACCESS_KEY_ID: 'random'
         AWS_SECRET_ACCESS_KEY: 'random'
+      shell: bash
     #----------------------------------------------
     #              run black
     #----------------------------------------------
@@ -57,6 +60,7 @@ runs:
       run: |
         source src/.venv/bin/activate
         black src/ --check
+      shell: bash
 
 
         
