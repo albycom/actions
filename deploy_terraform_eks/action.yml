@@ -23,6 +23,14 @@ inputs:
   ssh_key:
     description: "SSH key to inject into docker build"
     required: false
+  route53_access_key:
+    description: "route53 access key"
+    required: false
+    default: ""
+  route53_secret_key:
+    description: "route53 secret key"
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -102,10 +110,9 @@ runs:
         echo "DOCKER_IMAGE_TAG ${{ env.DOCKER_IMAGE_TAG }}"
         cd terraform/deployment
         terraform init -backend-config=${{ inputs.service_stage }}/${{ inputs.service_stage }}_${{ inputs.aws_region }}_backend_config.tfvars 
-        terraform plan -var-file=${{ inputs.service_stage }}/${{ inputs.service_stage }}_${{ inputs.aws_region }}.tfvars \
-                                      -var "service_env_vars=${{ inputs.service_env_vars }}" \
-                                      -var "docker_image_tag=${{ env.DOCKER_IMAGE_TAG }}"
         terraform apply -auto-approve -var-file=${{ inputs.service_stage }}/${{ inputs.service_stage }}_${{ inputs.aws_region }}.tfvars \
+                                      -var "route53_access_key=${{ inputs.route53_access_key }}" \
+                                      -var "route53_secret_key=${{ inputs.route53_secret_key }}" \
                                       -var "service_env_vars=${{ inputs.service_env_vars }}" \
                                       -var "docker_image_tag=${{ env.DOCKER_IMAGE_TAG }}"
       shell: bash

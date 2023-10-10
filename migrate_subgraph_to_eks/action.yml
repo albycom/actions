@@ -1,4 +1,4 @@
-name: "Deploy GraphQL subgraph to AWS EKS"
+name: "Migrate and Deploy GraphQL subgraph to AWS EKS"
 description: "Deploys GQL Subgraph EKS"
 inputs:
   service_name:
@@ -32,12 +32,6 @@ inputs:
   ssh_key:
     description: "SSH key to inject into docker build"
     required: false
-  route53_access_key:
-    description: "route53 access key"
-    required: true
-  route53_secret_key:
-    description: "route53 secret key"
-    required: true
 
 runs:
   using: "composite"
@@ -46,7 +40,7 @@ runs:
       with:
         node-version: '16'
 
-    - name: Build and deploy Terraform ECS
+    - name: Build and deploy Terraform EKS
       uses: albycom/actions/deploy_terraform_eks@main
       with:
         service_name: ${{ inputs.service_name }}
@@ -56,6 +50,8 @@ runs:
         timeout: ${{ inputs.timeout }}
         service_env_vars: ${{ inputs.service_env_vars }}
         ssh_key: ${{ inputs.ssh_key }}
+        route53_access_key: ${{ inputs.route53_access_key }}
+        route53_secret_key: ${{ inputs.route53_secret_key }}
 
     - name: Get apollo args
       id: apollo_args
