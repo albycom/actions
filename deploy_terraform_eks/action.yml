@@ -1,5 +1,5 @@
-name: "Deploy Serverless AWS ECS"
-description: "Deploys Terraform ECS"
+name: "Deploy AWS EKS"
+description: "Deploys Terraform EKS"
 inputs:
   service_name:
     description: "service name"
@@ -26,11 +26,11 @@ inputs:
   route53_access_key:
     description: "route53 access key"
     required: false
-    default: ""
+    default: "invalid"
   route53_secret_key:
     description: "route53 secret key"
     required: false
-    default: ""
+    default: "invalid"
 
 runs:
   using: "composite"
