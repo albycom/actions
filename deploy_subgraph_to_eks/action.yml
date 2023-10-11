@@ -32,12 +32,6 @@ inputs:
   ssh_key:
     description: "SSH key to inject into docker build"
     required: false
-  route53_access_key:
-    description: "route53 access key"
-    required: true
-  route53_secret_key:
-    description: "route53 secret key"
-    required: true
 
 runs:
   using: "composite"
