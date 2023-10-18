@@ -52,6 +52,7 @@ runs:
       env:
         AWS_ACCESS_KEY_ID: 'random'
         AWS_SECRET_ACCESS_KEY: 'random'
+        AWS_DEFAULT_REGION: 'us-west-2'
       shell: bash
     #----------------------------------------------
     #              run black
