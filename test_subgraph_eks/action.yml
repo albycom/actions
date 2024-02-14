@@ -37,6 +37,10 @@ runs:
         mongodb-username: root
         mongodb-password: root
         mongodb-db: alby
+    - name: Start RabbitMQ
+      uses: namoshek/rabbitmq-github-action@v1
+      with:
+        ports: '5672:5672 15672:15672'
     #----------------------------------------------
     #  -----  install & configure poetry  -----
     #----------------------------------------------
