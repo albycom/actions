@@ -40,9 +40,6 @@ runs:
       with:
         node-version: '16'
 
-    - name: Checkout
-      uses: actions/checkout@v2
-
     - if: inputs.ssh_key != ''
       uses: webfactory/ssh-agent@v0.7.0
       with:
