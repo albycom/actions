@@ -28,7 +28,7 @@ runs:
     - run: npm ci
       shell: bash
 
-    - run: npm i -g serverless
+    - run: npm i -g serverless@3.38.0
       shell: bash
 
     - name: Configure AWS credentials for deployment
