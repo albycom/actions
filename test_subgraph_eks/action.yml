@@ -6,8 +6,8 @@ inputs:
     required: false
   python_version:
     description: "The python version to use"
-    required: false
-    default: "3.11"
+    required: true
+    default: '3.11'
 
 runs:
   using: "composite"
@@ -21,7 +21,7 @@ runs:
       uses: actions/setup-python@v4
       with:
         # Semantic version range syntax or exact version of a Python version
-        python-version: inputs.python_version
+        python-version: ${{ inputs.python_version }}
         # Optional - x64 or x86 architecture, defaults to x64
         architecture: 'x64'
     - name: Setup DynamoDB Local
