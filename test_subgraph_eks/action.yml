@@ -8,6 +8,12 @@ inputs:
     description: "The python version to use"
     required: true
     default: '3.11'
+  jfrog_pypi_user:
+    description: "jfrog user"
+    required: false
+  jfrog_pypi_token:
+    description: "jfrog token"
+    required: false
 
 runs:
   using: "composite"
@@ -54,6 +60,14 @@ runs:
         virtualenvs-create: true
         virtualenvs-in-project: true
         installer-parallel: true
+    #----------------------------------------------
+    #  -----  configure jfrog for poetry  -----
+    #----------------------------------------------
+    - if: inputs.jfrog_pypi_user != ''
+      shell: bash
+      run: |
+        poetry config repositories.bluecore "https://bluecore.jfrog.io/bluecore/api/pypi/pypi-local/simple/"
+        poetry config http-basic.bluecore ${{ inputs.jfrog_pypi_user }} ${{ inputs.jfrog_pypi_token }}
     #----------------------------------------------
     #       load cached venv if cache exists
     #----------------------------------------------
