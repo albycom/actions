@@ -38,6 +38,12 @@ inputs:
   route53_secret_key:
     description: "route53 secret key"
     required: true
+  jfrog_pypi_user:
+    description: "jfrog user"
+    required: false
+  jfrog_pypi_token:
+    description: "jfrog token"
+    required: false
 
 runs:
   using: "composite"
@@ -71,12 +77,23 @@ runs:
       run: echo "::set-output name=IMAGE_TAG::$(date +'%Y%m%d%H%M%S')"
       shell: bash
 
-    - if: inputs.ssh_key != ''
+    - if: inputs.ssh_key != '' and inputs.jfrog_pypi_user == ''
       name: Build docker image with SSH key
       env:
         SERVICE_NAME: ${{ inputs.service_name }}
       run: |
         DOCKER_BUILDKIT=1 docker buildx build --ssh default --platform=linux/amd64 -f ./src/Dockerfile -t "$SERVICE_NAME" ./src/
+      shell: bash
+
+
+    - if: inputs.ssh_key != '' and inputs.jfrog_pypi_user != ''
+      name: Build docker image without SSH key and jfrog
+      env:
+        SERVICE_NAME: ${{ inputs.service_name }}
+        JFROG_PYPI_USER: ${{ inputs.jfrog_pypi_user }}
+        JFROG_PYPI_TOKEN: ${{ inputs.jfrog_pypi_token }}
+      run: |
+        DOCKER_BUILDKIT=1 docker buildx build --build-arg JFROG_PYPI_USER=$JFROG_PYPI_USER --build-arg JFROG_PYPI_TOKEN=JFROG_PYPI_TOKEN --platform=linux/amd64 -f ./src/Dockerfile -t "$SERVICE_NAME" ./src/
       shell: bash
 
     - if: inputs.ssh_key == ''
