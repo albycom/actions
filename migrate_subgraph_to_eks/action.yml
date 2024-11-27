@@ -80,7 +80,7 @@ runs:
       run: echo "::set-output name=IMAGE_TAG::$(date +'%Y%m%d%H%M%S')"
       shell: bash
 
-    - if: inputs.ssh_key != '' and inputs.jfrog_pypi_user == ''
+    - if: inputs.ssh_key != '' && inputs.jfrog_pypi_user == ''
       name: Build docker image with SSH key
       env:
         SERVICE_NAME: ${{ inputs.service_name }}
@@ -89,7 +89,7 @@ runs:
       shell: bash
 
 
-    - if: inputs.ssh_key != '' and inputs.jfrog_pypi_user != ''
+    - if: inputs.ssh_key != '' && inputs.jfrog_pypi_user != ''
       name: Build docker image without SSH key and jfrog
       env:
         SERVICE_NAME: ${{ inputs.service_name }}
