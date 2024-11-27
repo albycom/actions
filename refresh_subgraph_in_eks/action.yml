@@ -93,8 +93,9 @@ runs:
         JFROG_PYPI_USER: ${{ inputs.jfrog_pypi_user }}
         JFROG_PYPI_TOKEN: ${{ inputs.jfrog_pypi_token }}
       run: |
-        DOCKER_BUILDKIT=1 docker buildx build --build-arg JFROG_PYPI_USER=$JFROG_PYPI_USER --build-arg JFROG_PYPI_TOKEN=JFROG_PYPI_TOKEN --platform=linux/amd64 -f ./src/Dockerfile -t "$SERVICE_NAME" ./src/
+        DOCKER_BUILDKIT=1 docker buildx build --ssh default --build-arg JFROG_PYPI_USER=$JFROG_PYPI_USER --build-arg JFROG_PYPI_TOKEN=$JFROG_PYPI_TOKEN --platform=linux/amd64 -f ./src/Dockerfile -t "$SERVICE_NAME" ./src/
       shell: bash
+
 
     - if: inputs.ssh_key == ''
       name: Build docker image without SSH key
