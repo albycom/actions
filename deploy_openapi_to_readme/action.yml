@@ -7,7 +7,6 @@ inputs:
   application_id:
     description: "ID of the application on README.io"
     required: true
-secrets:
   readme_api_key:
     description: "API key for README.io"
     required: true
@@ -21,4 +20,4 @@ runs:
     - name: Update `openapi` spec on README.io 🚀
       uses: readmeio/rdme@v9
       with:
-        rdme: openapi ${{ inputs.openapi_spec_path }} --key=${{ secrets.readme_api_key }} --id=${{ inputs.application_id }}
+        rdme: openapi ${{ inputs.openapi_spec_path }} --key=${{ inputs.readme_api_key }} --id=${{ inputs.application_id }}
