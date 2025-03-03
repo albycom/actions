@@ -1,0 +1,20 @@
+name: "Updates OpenAPI spec to README.io"
+description: "Updates deployed OpenAPI spec on README.io"
+inputs:
+  openapi_spec_path:
+    description: "Path to the open API spec file"
+    required: true
+  application_id:
+    description: "ID of the application on README.io"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check out repo 📚
+      uses: actions/checkout@v4
+
+    - name: Update `openapi` spec on README.io 🚀
+      uses: readmeio/rdme@v9
+      with:
+        rdme: openapi ${{ inputs.openapi_spec_path }} --key=${{ secrets.README_API_KEY }} --id=${{ inputs.application_id }}
