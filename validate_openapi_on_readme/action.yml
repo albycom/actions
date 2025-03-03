@@ -1,0 +1,17 @@
+name: "Validate OpenAPI spec on README.io"
+description: "Validates deployed OpenAPI spec on README.io without uploading"
+inputs:
+  openapi_spec_path:
+    description: "Path to the open API spec file"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check out repo 📚
+      uses: actions/checkout@v4
+
+    - name: Run `openapi:validate` command 🚀
+      uses: readmeio/rdme@v10
+      with:
+        rdme: openapi:validate ${{ inputs.openapi_spec_path }}
