@@ -162,7 +162,7 @@ runs:
 
     - name: Continuously publish schema to Apollo Studio
       run: |
-        for i in {1..10}; do
+        for i in {1..6}; do
           echo "Running Schema Publishing: $i"
           rover subgraph introspect ${{ env.GQL_ROUTING_URL }} | rover subgraph publish ${{ inputs.apollo_graph_ref }} --name ${{ inputs.service_name }} --schema - --routing-url ${{ env.GQL_ROUTING_URL }}    
           sleep 5
