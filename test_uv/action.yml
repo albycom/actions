@@ -1,0 +1,83 @@
+name: "Test"
+description: "Runs project tests and lints"
+inputs:
+  ssh_key:
+    description: "SSH key to inject into docker build"
+    required: false
+  python_version:
+    description: "The python version to use"
+    required: true
+    default: "3.12"
+  jfrog_pypi_user:
+    description: "jfrog user"
+    required: false
+  jfrog_pypi_token:
+    description: "jfrog token"
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - if: inputs.ssh_key != ''
+      uses: webfactory/ssh-agent@v0.7.0
+      with:
+        ssh-private-key: ${{ inputs.ssh_key }}
+
+    - name: Set up Python 3.x
+      uses: actions/setup-python@v4
+      with:
+        # Semantic version range syntax or exact version of a Python version
+        python-version: ${{ inputs.python_version }}
+        # Optional - x64 or x86 architecture, defaults to x64
+        architecture: "x64"
+
+    - name: Setup DynamoDB Local
+      uses: rrainn/dynamodb-action@v2.0.1
+      with:
+        port: 8000
+        cors: "*"
+
+    - name: Start Redis
+      uses: supercharge/redis-github-action@1.7.0
+      with:
+        redis-image: redis/redis-stack-server
+        redis-version: latest
+
+    - name: Start MongoDB
+      uses: supercharge/mongodb-github-action@1.10.0
+      with:
+        mongodb-version: 7.0.5
+        mongodb-username: root
+        mongodb-password: root
+        mongodb-db: alby
+
+    - name: Start RabbitMQ
+      uses: namoshek/rabbitmq-github-action@v1
+      with:
+        ports: "5672:5672 15672:15672"
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+
+    - name: Sync dependencies
+      env:
+        UV_INDEX_BLUECORE_USERNAME: ${{ inputs.jfrog_pypi_user }}
+        UV_INDEX_BLUECORE_PASSWORD: ${{ inputs.jfrog_pypi_token }}
+      run: cd src && uv sync
+      shell: bash
+
+    - name: Run tests
+      run: |
+        cd src && DYNAMO_ENDPOINT_URL=http://localhost:8000 uv --offline run pytest ./tests
+      env:
+        AWS_ACCESS_KEY_ID: "random"
+        AWS_SECRET_ACCESS_KEY: "random"
+        AWS_DEFAULT_REGION: "us-west-2"
+      shell: bash
+
+    - name: Check formatting (black)
+      run: |
+        cd src && uv --offline run black . --check
+      shell: bash
