@@ -15,7 +15,7 @@ This action prints deploys a GKE subgraph to Apollo
 ## Example usage
 
 ```yaml
-uses: albycom/actions/migrate_subgraph_to_eks@main
+uses: albycom/actions/deploy_subgraph_to_gke@main
 with:
   service_name: ${{ env.SERVICE_NAME }}
   service_stage: ${{ env.SERVICE_STAGE }}
