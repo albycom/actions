@@ -1,6 +1,6 @@
 # deploy_subgraph_to_gke action
 
-This action prints deploys a GKE subgraph to Apollo
+This action deploys a GKE subgraph to Apollo
 
 ## Inputs
 
