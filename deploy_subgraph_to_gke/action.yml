@@ -1,0 +1,49 @@
+name: "Deploy GraphQL subgraph to GKE"
+description: "Deploys GQL Subgraph GKE"
+inputs:
+  service_name:
+    description: "service name"
+    required: true
+  service_stage:
+    description: "service stage"
+    required: true
+  apollo_graph_ref:
+    description: "Apollo graph ref"
+    required: true
+  apollo_key:
+    description: "Apollo API key"
+    required: true
+  apollo_routing_url:
+    description: "Apollo routing URL"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-node@v3
+      with:
+        node-version: '16'
+
+    - name: Get apollo args
+      id: apollo_args
+      run: |
+        echo "GQL_ROUTING_URL=${{ inputs.apollo_routing_url }}" >> ${GITHUB_ENV}
+        echo "APOLLO_KEY=${{ inputs.apollo_key }}" >> ${GITHUB_ENV}
+      shell: bash
+
+    - name: Install Rover
+      run: |
+        curl -sSL https://rover.apollo.dev/nix/v0.20.0 | sh
+        # Add Rover to the $GITHUB_PATH so it can be used in another step
+        # https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions#adding-a-system-path
+        echo "$HOME/.rover/bin" >> $GITHUB_PATH
+      shell: bash
+
+    - name: Continuously publish schema to Apollo Studio
+      run: |
+        for i in {1..6}; do
+          echo "Running Schema Publishing: $i"
+          rover subgraph introspect ${{ env.GQL_ROUTING_URL }} | rover subgraph publish ${{ inputs.apollo_graph_ref }} --name ${{ inputs.service_name }} --schema - --routing-url ${{ env.GQL_ROUTING_URL }}    
+          sleep 5
+        done
+      shell: bash
