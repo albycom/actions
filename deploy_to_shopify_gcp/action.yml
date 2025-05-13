@@ -1,0 +1,54 @@
+name: "Deploy to Shopify GCP"
+description: "Deploys to Shopify GCP"
+inputs:
+  service_name:
+    description: "service name"
+    required: true
+  shopify_cli_partners_token:
+    description: "shopify cli partners token"
+    required: true
+  commit_url:
+    description: "commit url"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    # Checkout source code
+    - uses: actions/checkout@v4
+
+    - uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '3.3'
+        bundler-cache: true
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 23
+        cache: 'npm'
+        cache-dependency-path: '**/package-lock.json'
+    - name: Install npm dependencies
+      run: npm install
+      working-directory: ./src
+
+    - run: |
+        if [ "${SHOPIFY_CLI_PARTNERS_TOKEN}" == "" ]; then
+          echo "Missing SHOPIFY_CLI_PARTNERS_TOKEN env"
+          exit 1
+        fi
+        if [ "${COMMIT_URL}" == "" ]; then
+          echo "Missing COMMIT_URL env"
+          exit 1
+        fi
+
+        echo "Deploying: ${{ inputs.stage }}"
+      env:
+        SHOPIFY_CLI_PARTNERS_TOKENL: ${{ inputs.shopify_cli_partners_token }}
+        COMMIT_URL: ${{ inputs.commit_url }}
+
+    - name: Deploy
+      run: |
+        npm run deploy -- -f --source-control-url "$COMMIT_URL" --config ${{ inputs.stage }}
+      working-directory: ./src
+      env:
+        SHOPIFY_CLI_PARTNERS_TOKENL: ${{ inputs.shopify_cli_partners_token }}
+        COMMIT_URL: ${{ inputs.commit_url }}
