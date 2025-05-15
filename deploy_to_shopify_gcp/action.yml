@@ -4,6 +4,9 @@ inputs:
   service_name:
     description: "service name"
     required: true
+  service_stage:
+    description: "service stage"
+    required: true
   shopify_cli_partners_token:
     description: "shopify cli partners token"
     required: true
@@ -47,8 +50,7 @@ runs:
 
     - name: Deploy
       run: |
-        npm run deploy -- -f --source-control-url "$COMMIT_URL" --config ${{ inputs.stage }}
+        npm run deploy -- -f --source-control-url "${{ inputs.commit_url }}" --config ${{ inputs.service_stage }}
       working-directory: ./src
       env:
         SHOPIFY_CLI_PARTNERS_TOKENL: ${{ inputs.shopify_cli_partners_token }}
-        COMMIT_URL: ${{ inputs.commit_url }}
