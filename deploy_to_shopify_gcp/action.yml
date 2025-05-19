@@ -45,7 +45,7 @@ runs:
 
         echo "Deploying: ${{ inputs.stage }}"
       env:
-        SHOPIFY_CLI_PARTNERS_TOKENL: ${{ inputs.shopify_cli_partners_token }}
+        SHOPIFY_CLI_PARTNERS_TOKEN: ${{ inputs.shopify_cli_partners_token }}
         COMMIT_URL: ${{ inputs.commit_url }}
 
     - name: Deploy
@@ -53,4 +53,4 @@ runs:
         npm run deploy -- -f --source-control-url "${{ inputs.commit_url }}" --config ${{ inputs.service_stage }}
       working-directory: ./src
       env:
-        SHOPIFY_CLI_PARTNERS_TOKENL: ${{ inputs.shopify_cli_partners_token }}
+        SHOPIFY_CLI_PARTNERS_TOKEN: ${{ inputs.shopify_cli_partners_token }}
