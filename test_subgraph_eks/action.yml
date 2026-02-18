@@ -50,12 +50,23 @@ runs:
         echo "Redis did not become ready in time"
         exit 1
     - name: Start MongoDB
-      uses: supercharge/mongodb-github-action@1.10.0
-      with:
-        mongodb-version: 7.0.5
-        mongodb-username: root
-        mongodb-password: root
-        mongodb-db: alby
+      shell: bash
+      run: |
+        docker rm -f mongodb >/dev/null 2>&1 || true
+        docker run --name mongodb --detach --publish 27017:27017 \
+          -e MONGO_INITDB_ROOT_USERNAME=root \
+          -e MONGO_INITDB_ROOT_PASSWORD=root \
+          -e MONGO_INITDB_DATABASE=alby \
+          mongo:7.0.5
+        for i in {1..45}; do
+          if [[ "$(docker exec mongodb mongosh --quiet --username root --password root --authenticationDatabase admin --eval "db.adminCommand({ ping: 1 }).ok")" == "1" ]]; then
+            exit 0
+          fi
+          sleep 1
+        done
+        docker logs mongodb
+        echo "MongoDB did not become ready in time"
+        exit 1
     - name: Start RabbitMQ
       uses: namoshek/rabbitmq-github-action@v1
       with:
