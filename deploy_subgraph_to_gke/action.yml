@@ -16,6 +16,10 @@ inputs:
   apollo_routing_url:
     description: "Apollo routing URL"
     required: true
+  introspection_token:
+    description: "Token sent as the X-Internal-Introspection header so rover can read the federation _service SDL from internet-facing stages"
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -43,7 +47,7 @@ runs:
       run: |
         for i in {1..6}; do
           echo "Running Schema Publishing: $i"
-          rover subgraph introspect ${{ env.GQL_ROUTING_URL }} | rover subgraph publish ${{ inputs.apollo_graph_ref }} --name ${{ inputs.service_name }} --schema - --routing-url ${{ env.GQL_ROUTING_URL }}    
+          rover subgraph introspect ${{ env.GQL_ROUTING_URL }} --header "X-Internal-Introspection: ${{ inputs.introspection_token }}" | rover subgraph publish ${{ inputs.apollo_graph_ref }} --name ${{ inputs.service_name }} --schema - --routing-url ${{ env.GQL_ROUTING_URL }}
           sleep 5
         done
       shell: bash
